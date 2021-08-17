@@ -99,13 +99,21 @@ trait wpPostAbleTrait{
 
 		if (
 			empty( $post_id ) ||
-			empty( $post = get_post( $post_id ) ) ||
-			! apply_filters( __CLASS__ . '\wpPostAbleTrait\loadPost\equal_post_type',
-				apply_filters( '\wpPostAbleTrait\loadPost\equal_post_type', $post->post_type === $this->post_type, __CLASS__ ), __CLASS__
-			)
+			empty( $post = get_post( $post_id ) )
 		){
 			/** @var wpPostAble $this */
 			throw new wppaLoadPostException( $post_id, $this, "Incorrect post id [ $post_id ]");
+		}
+
+		if (
+			! apply_filters( __CLASS__ . '\wpPostAbleTrait\loadPost\equalPostType',
+				apply_filters( '\wpPostAbleTrait\loadPost\equalPostType', $post->post_type === $this->post_type, __CLASS__ ), __CLASS__
+			)
+		){
+			/** @var wpPostAble $this */
+			throw new wppaLoadPostException( $post_id, $this,
+				"Incompatible post type. Class type is \"$this->post_type\", trying to load \"$post->post_type\""
+			);
 		}
 
 		$this->post = $post;
