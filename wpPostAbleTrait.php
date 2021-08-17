@@ -1,6 +1,6 @@
 <?php
 /**
- * Use this trait in conjunction WPPostAble interface only.
+ * Use this trait in conjunction wpPostAble interface only.
  *
  * By using this trait, you should assure the existence following entities in your class:
  *
@@ -34,14 +34,14 @@
  */
 namespace iTRON;
 
-use iTRON\Exception\WPPATCreatePostException;
-use iTRON\Exception\WPPATLoadPostException;
-use iTRON\Exception\WPPATSavePostException;
-use iTRON\WPPostAble;
+use iTRON\Exception\wppaCreatePostException;
+use iTRON\Exception\wppaLoadPostException;
+use iTRON\Exception\wppaSavePostException;
+use iTRON\wpPostAble;
 use WP_Error;
 use WP_Post;
 
-trait WPPostAbleTrait{
+trait wpPostAbleTrait{
 	/**
 	 * Add $post_type in your class.
 	 * Example
@@ -65,8 +65,8 @@ trait WPPostAbleTrait{
 	 * @param int $post_id
 	 *
 	 * @return $this
-	 * @throws WPPATLoadPostException
-	 * @throws WPPATCreatePostException
+	 * @throws wppaLoadPostException
+	 * @throws wppaCreatePostException
 	 */
 	private function wpPostAble( int $post_id = 0 ): self {
 		if ( empty( $post_id ) ){
@@ -78,8 +78,8 @@ trait WPPostAbleTrait{
 			], true );
 			if ( empty( $post_id ) || is_wp_error( $post_id ) ){
 				$error = empty( $post_id ) ? new WP_Error() : $post_id;
-				/** @var WPPostAble $this */
-				throw new WPPATCreatePostException( $this, $error, $error->get_error_messages() );
+				/** @var wpPostAble $this */
+				throw new wppaCreatePostException( $this, $error, $error->get_error_messages() );
 			}
 		}
 
@@ -95,14 +95,14 @@ trait WPPostAbleTrait{
 	}
 
 	/**
-	 * @throws WPPATSavePostException
+	 * @throws wppaSavePostException
 	 */
 	public function savePost(): self {
 		$result = wp_update_post( $this->post, true );
 		if ( empty( $result ) || is_wp_error( $result ) ){
 			$error = empty( $result ) ? new WP_Error() : $result;
-			/** @var WPPostAble $this */
-			throw new WPPATSavePostException( $this, $error, $error->get_error_messages() );
+			/** @var wpPostAble $this */
+			throw new wppaSavePostException( $this, $error, $error->get_error_messages() );
 		}
 		return $this;
 	}
@@ -110,19 +110,19 @@ trait WPPostAbleTrait{
 	/**
 	 * Loads and initiates all Group data from WP post.
 	 * @return $this
-	 * @throws WPPATLoadPostException
+	 * @throws wppaLoadPostException
 	 */
 	public function loadPost( int $post_id ): self {
 
 		if (
 			empty( $post_id ) ||
 			empty( $post = get_post( $post_id ) ) ||
-			! apply_filters( __CLASS__ . '\WPPostAbleTrait\loadPost\equal_post_type',
-				apply_filters( '\WPPostAbleTrait\loadPost\equal_post_type', $post->post_type === $this->post_type, __CLASS__ ), __CLASS__
+			! apply_filters( __CLASS__ . '\wpPostAbleTrait\loadPost\equal_post_type',
+				apply_filters( '\wpPostAbleTrait\loadPost\equal_post_type', $post->post_type === $this->post_type, __CLASS__ ), __CLASS__
 			)
 		){
-			/** @var WPPostAble $this */
-			throw new WPPATLoadPostException( $post_id, $this, "Incorrect post id [ $post_id ]");
+			/** @var wpPostAble $this */
+			throw new wppaLoadPostException( $post_id, $this, "Incorrect post id [ $post_id ]");
 		}
 
 		$this->post = $post;
@@ -137,8 +137,8 @@ trait WPPostAbleTrait{
 			call_user_func_array( $callback, [ & $this ] );
 		}
 
-		do_action_ref_array( '\WPPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
-		do_action_ref_array( __CLASS__ . '\WPPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
+		do_action_ref_array( '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
+		do_action_ref_array( __CLASS__ . '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
 		return $this;
 	}
 
@@ -162,7 +162,7 @@ trait WPPostAbleTrait{
 	}
 
 	/**
-	 * @throws WPPATSavePostException
+	 * @throws wppaSavePostException
 	 */
 	public function publish(): self {
 		$this->setStatus( 'publish' );
@@ -170,7 +170,7 @@ trait WPPostAbleTrait{
 	}
 
 	/**
-	 * @throws WPPATSavePostException
+	 * @throws wppaSavePostException
 	 */
 	public function draft(): self {
 		$this->setStatus( 'draft' );

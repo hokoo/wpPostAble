@@ -24,8 +24,8 @@ and others.
     ```php
     use iTRON;
     
-    class Item implements WPPostAble{
-        use WPPostAbleTrait;
+    class Item implements wpPostAble{
+        use wpPostAbleTrait;
     }
     ```
 
@@ -56,8 +56,8 @@ and others.
 3. Finally, call `wpPostAble()` method in the beginning `__construct()` of your class.
    ```php
       /**
-       * @throws Exception\WPPATLoadPostException
-       * @throws Exception\WPPATCreatePostException
+       * @throws Exception\wppaLoadPostException
+       * @throws Exception\wppaCreatePostException
        */
       public function __construct( int $post_id = 0 ) {
          $this->wpPostAble( $post_id );

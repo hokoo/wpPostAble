@@ -1,12 +1,12 @@
 <?php
 /**
- * Use this interface in conjunction WPPostAbleTrait only.
+ * Use this interface in conjunction wpPostAbleTrait only.
  */
 namespace iTRON;
 
 use WP_Post;
 
-interface WPPostAble{
+interface wpPostAble{
 	public function getPost(): WP_Post;
 	public function savePost();
 	public function loadPost( int $post_id );

@@ -3,6 +3,6 @@ namespace iTRON\Exception;
 
 use WP_Error;
 
-interface WPException{
+interface wpException{
 	public function getError(): WP_Error;
 }
