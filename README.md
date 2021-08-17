@@ -1,4 +1,5 @@
-#What is wpPostAble
+# What is wpPostAble
+
 Library provides a functionality for associating your classes with WordPress class WP_Post.
 Once you create the instance, wpPostAble creates the WP_Post object and stores this in your instance.
 
@@ -15,8 +16,8 @@ You can manage your instance with such methods as
 
 and others.
 
-#How to use
-##Preparing step by step.
+# How to use
+## Preparing step by step.
 
 1. Create your own class based on wpPostAble interface
 
@@ -65,7 +66,7 @@ and others.
       }
    ```
 
-##Now you are able to use your class
+## Now you are able to use your class
 ```php
 $item = new Item();
 ```
