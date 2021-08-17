@@ -2,36 +2,13 @@
 /**
  * Use this trait in conjunction wpPostAble interface only.
  *
- * By using this trait, you should assure the existence following entities in your class:
- *
- * Fields
- *  $post_type          string      Private     WP post type, associated with your class
- *  $initial_method     string      Private     Name of private method in your class (see more below)
- *
- * Methods:
- *  (any name)          callable    Method does initial setups for your needings.
- *                                  Called from @see self::loadPost() by closure.
- *                                  Method name should be initially stored to $initial_method field.
- *                                  One argument for callable
- *                                      var             $this
- *                                      Type            self
- *                                      Description     Self-object, passed by link
- *
- * Also you should call wpPostAble() method in the beginning __construct() of your class.
+ * By using this trait, you should call wpPostAble( $post_type, $post_id ) method
+ * in the beginning __construct() of your class.
+ * Pass to it two parameters
+ *      $post_type      string      WP post type, associated with your class
+ *      $post_id        int         Post ID for existing post, or nothing for creating new post
  */
 
-/**
-	Example for necessary fields and methods
-
-  	private $post_type = 'super_cpt';
-	private $initial_method = '_init';
- 	private function _init(): callable {
-		return function ( self $group ){
-			// $group is linking to $this
-			// Do initial actions
-		};
-	}
- */
 namespace iTRON;
 
 use iTRON\Exception\wppaCreatePostException;
@@ -43,10 +20,9 @@ use WP_Post;
 
 trait wpPostAbleTrait{
 	/**
-	 * Add $post_type in your class.
-	 * Example
-	 * private $post_type = 'super_cpt';
+	 * @var string
 	 */
+	private $post_type = '';
 
 	/**
 	 * @var WP_Post
@@ -62,13 +38,19 @@ trait wpPostAbleTrait{
 	/**
 	 * Call this method in the beginning __construct() of your class.
 	 *
+	 * @param string $post_type
 	 * @param int $post_id
 	 *
 	 * @return $this
-	 * @throws wppaLoadPostException
 	 * @throws wppaCreatePostException
+	 * @throws wppaLoadPostException
 	 */
-	private function wpPostAble( int $post_id = 0 ): self {
+	private function wpPostAble( string $post_type, int $post_id = 0 ): self {
+		static $called = 0;
+		if ( $called++ > 0 ) return $this;
+
+		$this->post_type = $post_type;
+
 		if ( empty( $post_id ) ){
 			$post_id = wp_insert_post([
 				'post_type'     => $this->getPostType(),
@@ -76,6 +58,7 @@ trait wpPostAbleTrait{
 				'post_title'    => '',
 				'post_content'  => 'Empty.',
 			], true );
+
 			if ( empty( $post_id ) || is_wp_error( $post_id ) ){
 				$error = empty( $post_id ) ? new WP_Error() : $post_id;
 				/** @var wpPostAble $this */
@@ -126,16 +109,6 @@ trait wpPostAbleTrait{
 		}
 
 		$this->post = $post;
-
-		/**
-		 * Call callable method from main class
-		 */
-		if (
-			is_callable( $callback = call_user_func( [$this, $this->initial_method] ) ) &&
-			is_callable( $callback )
-		){
-			call_user_func_array( $callback, [ & $this ] );
-		}
 
 		do_action_ref_array( '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
 		do_action_ref_array( __CLASS__ . '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );

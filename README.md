@@ -29,25 +29,21 @@ and others.
     }
     ```
 
-2. By using this library, you should assure the existence following entities in your class:
+2. Call `wpPostAble()` method in the beginning `__construct()` of your class.
 
-   - Fields
-     
-    ```php
-    private $post_type = 'post_type_assign_with';
-    ```
-   
-   Field `$post_type` stores name of post type, associated with your class. You should guarantee the existence this post type.
+   Pass to it two parameters
 
-   
-3. Finally, call `wpPostAble()` method in the beginning `__construct()` of your class.
+   `$post_type` _string_ WP post type, associated with your class
+
+   `$post_id`   _int_    Post ID for existing post, or nothing for creating new post
+
    ```php
       /**
        * @throws Exception\wppaLoadPostException
        * @throws Exception\wppaCreatePostException
        */
-      public function __construct( int $post_id = 0 ) {
-         $this->wpPostAble( $post_id );
+      public function __construct() {
+         $this->wpPostAble( POST_TYPE, $post_id );
          
          // Do anything you need
       }
