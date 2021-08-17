@@ -17,7 +17,7 @@
  *                                      Type            self
  *                                      Description     Self-object, passed by link
  *
- * Also you should call construct() method in the beginning __construct() of your class.
+ * Also you should call wpPostAble() method in the beginning __construct() of your class.
  */
 
 /**
@@ -68,7 +68,7 @@ trait WPPostAbleTrait{
 	 * @throws WPPATLoadPostException
 	 * @throws WPPATCreatePostException
 	 */
-	private function construct( int $post_id = 0 ): self {
+	private function wpPostAble( int $post_id = 0 ): self {
 		if ( empty( $post_id ) ){
 			$post_id = wp_insert_post([
 				'post_type'     => $this->getPostType(),
