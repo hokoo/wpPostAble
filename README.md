@@ -35,23 +35,10 @@ and others.
      
     ```php
     private $post_type = 'post_type_assign_with';
-    
-    private $initial_method = '_init';
     ```
    
    Field `$post_type` stores name of post type, associated with your class. You should guarantee the existence this post type.
-   
-   Field `$initial_method` stores name of private method in your class. This method you should create as described below.
 
-   - Methods
-   ```php
-   private function _init(): callable {
-      return function ( self $group ){
-         // $group is the $this passed by link
-         // Do your initial actions
-      };
-   }
-   ```
    
 3. Finally, call `wpPostAble()` method in the beginning `__construct()` of your class.
    ```php
