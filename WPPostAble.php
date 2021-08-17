@@ -1,4 +1,7 @@
 <?php
+/**
+ * Use this interface in conjunction WPPostAbleTrait only.
+ */
 namespace iTRON;
 
 use WP_Post;
