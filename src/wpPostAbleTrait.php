@@ -29,12 +29,6 @@ trait wpPostAbleTrait{
 	protected $post;
 
 	/**
-	 * @var string
-	 * @see wp_insert_post()
-	 */
-	public $status = 'draft';
-
-	/**
 	 * @var array
 	 */
 	private $post_meta = [];
@@ -58,9 +52,9 @@ trait wpPostAbleTrait{
 		if ( empty( $post_id ) ){
 			$post_id = wp_insert_post([
 				'post_type'     => $this->getPostType(),
-				'post_status'   => $this->getStatus(),
-				'post_title'    => '',
-				'post_content'  => 'Empty.',
+				'post_status'   => $this->applyFilters( '\wpPostAbleTrait\init\defaultStatus', 'draft' ),
+				'post_title'    => $this->applyFilters( '\wpPostAbleTrait\init\defaultTitle', 'draft' ),
+				'post_content'  => $this->applyFilters( '\wpPostAbleTrait\init\defaultContent', 'Empty.' ),
 			], true );
 
 			if ( empty( $post_id ) || is_wp_error( $post_id ) ){
@@ -173,11 +167,10 @@ trait wpPostAbleTrait{
 	}
 
 	public function getStatus(): string{
-		return $this->status;
+		return $this->post->post_status;
 	}
 
 	public function setStatus( string $status ): self {
-		$this->status = $status;
 		$this->post->post_status = $status;
 		return $this;
 	}
