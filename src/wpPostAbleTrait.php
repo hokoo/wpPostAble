@@ -73,15 +73,37 @@ trait wpPostAbleTrait{
 		return $this->loadPost( $post_id );
 	}
 
+	private function applyFilters( string $filterName, ...$data ){
+		array_push( $data, __CLASS__ );
+
+		$wideFilter = apply_filters( $filterName, ...$data );
+
+		return apply_filters( __CLASS__ . $filterName, $wideFilter, ...$data );
+	}
+
+	private function doAction( string $actionName, ...$data ){
+		array_push( $data, __CLASS__ );
+
+		do_action( $actionName, ...$data );
+
+		do_action( __CLASS__ . $actionName, ...$data );
+	}
+
+	private function doActionRef( string $actionName, $data ){
+		array_push( $data, __CLASS__ );
+
+		do_action( $actionName, ...$data );
+
+		do_action( __CLASS__ . $actionName, ...$data );
+	}
+
 	public function deletePost(){
-		do_action( __CLASS__ . '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post, __CLASS__ );
-		do_action( '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post, __CLASS__ );
+		$this->doAction( '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post );
 
 		wp_delete_post( $this->post->ID );
 		$this->post = null;
 
-		do_action( __CLASS__ . '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post, __CLASS__ );
-		do_action( '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post, __CLASS__ );
+		$this->doAction( '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post );
 	}
 
 	public function getPost(): WP_Post{
@@ -123,9 +145,7 @@ trait wpPostAbleTrait{
 		}
 
 		if (
-			! apply_filters( __CLASS__ . '\wpPostAbleTrait\loadPost\equalPostType',
-				apply_filters( '\wpPostAbleTrait\loadPost\equalPostType', $post->post_type === $this->post_type, __CLASS__ ), __CLASS__
-			)
+			! $this->applyFilters( '\wpPostAbleTrait\loadPost\equalPostType', $post->post_type === $this->post_type )
 		){
 			/** @var wpPostAble $this */
 			throw new wppaLoadPostException( $post_id, $this,
@@ -135,8 +155,7 @@ trait wpPostAbleTrait{
 
 		$this->post = $post;
 
-		do_action_ref_array( '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
-		do_action_ref_array( __CLASS__ . '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
+		$this->doActionRef( '\wpPostAbleTrait\loadPost\loading', [ & $this ] );
 		return $this;
 	}
 
