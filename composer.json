@@ -1,5 +1,6 @@
 {
-  "name": "vendor_name/wppostable",
+  "name": "hokoo/wppostable",
+  "type": "library",
   "description": "Library provides a functionality for associating your classes with WordPress class WP_Post.",
   "minimum-stability": "stable",
   "license": "MIT",
