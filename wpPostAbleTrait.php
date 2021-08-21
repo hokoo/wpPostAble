@@ -163,4 +163,31 @@ trait wpPostAbleTrait{
 		$this->setStatus( 'draft' );
 		return $this->savePost();
 	}
+
+	/**
+	 * @param string $meta_key
+	 * @param mixed $meta_value
+	 *
+	 * @return $this
+	 */
+	public function setMetaField( string $meta_key, $meta_value ): self {
+		$this->post_meta[ $meta_key ] = $meta_value;
+		return $this;
+	}
+
+	/**
+	 * @param string $meta_key
+	 *
+	 * @return mixed|null
+	 */
+	public function getMetaField( string $meta_key ){
+		return $this->post_meta[ $meta_key ] ?? null;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getMetaFields(): array {
+		return $this->post_meta;
+	}
 }
