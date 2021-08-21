@@ -11,9 +11,9 @@
 
 namespace iTRON\wpPostAble;
 
-use iTRON\wpPostAble\Exception\wppaCreatePostException;
-use iTRON\wpPostAble\Exception\wppaLoadPostException;
-use iTRON\wpPostAble\Exception\wppaSavePostException;
+use iTRON\wpPostAble\Exceptions\wppaCreatePostException;
+use iTRON\wpPostAble\Exceptions\wppaLoadPostException;
+use iTRON\wpPostAble\Exceptions\wppaSavePostException;
 use WP_Error;
 use WP_Post;
 

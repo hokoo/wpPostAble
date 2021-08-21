@@ -1,5 +1,5 @@
 <?php
-namespace iTRON\wpPostAble\Exception;
+namespace iTRON\wpPostAble\Exceptions;
 
 use iTRON\wpPostAble\wpPostAble;
 use Throwable;
