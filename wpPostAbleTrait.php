@@ -101,7 +101,7 @@ trait wpPostAbleTrait{
 	 * @return $this
 	 * @throws wppaLoadPostException
 	 */
-	public function loadPost( int $post_id ): self {
+	private function loadPost( int $post_id ): self {
 
 		if (
 			empty( $post_id ) ||
