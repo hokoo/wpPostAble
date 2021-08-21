@@ -2,7 +2,8 @@
 /**
  * Use this interface in conjunction wpPostAbleTrait only.
  */
-namespace iTRON;
+
+namespace iTRON\wpPostAble;
 
 use WP_Post;
 

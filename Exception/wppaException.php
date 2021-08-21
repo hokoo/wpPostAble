@@ -1,7 +1,7 @@
 <?php
-namespace iTRON\Exception;
+namespace iTRON\wpPostAble\Exception;
 
-use iTRON\wpPostAble;
+use iTRON\wpPostAble\wpPostAble;
 use Throwable;
 
 class wppaException extends \Exception {

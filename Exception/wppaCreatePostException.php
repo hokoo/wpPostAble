@@ -1,9 +1,9 @@
 <?php
 
 
-namespace iTRON\Exception;
+namespace iTRON\wpPostAble\Exception;
 
-use iTRON\wpPostAble;
+use iTRON\wpPostAble\wpPostAble;
 use Throwable;
 use WP_Error;
 

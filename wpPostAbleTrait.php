@@ -9,12 +9,11 @@
  *      $post_id        int         Post ID for existing post, or nothing for creating new post
  */
 
-namespace iTRON;
+namespace iTRON\wpPostAble;
 
-use iTRON\Exception\wppaCreatePostException;
-use iTRON\Exception\wppaLoadPostException;
-use iTRON\Exception\wppaSavePostException;
-use iTRON\wpPostAble;
+use iTRON\wpPostAble\Exception\wppaCreatePostException;
+use iTRON\wpPostAble\Exception\wppaLoadPostException;
+use iTRON\wpPostAble\Exception\wppaSavePostException;
 use WP_Error;
 use WP_Post;
 
@@ -36,6 +35,11 @@ trait wpPostAbleTrait{
 	public $status = 'draft';
 
 	/**
+	 * @var array
+	 */
+	private $post_meta = [];
+
+	/**
 	 * Call this method in the beginning __construct() of your class.
 	 *
 	 * @param string $post_type
@@ -46,8 +50,8 @@ trait wpPostAbleTrait{
 	 * @throws wppaLoadPostException
 	 */
 	private function wpPostAble( string $post_type, int $post_id = 0 ): self {
-		static $called = 0;
-		if ( $called++ > 0 ) return $this;
+
+		if ( $this->post instanceof WP_Post ) return $this;
 
 		$this->post_type = $post_type;
 
@@ -81,7 +85,9 @@ trait wpPostAbleTrait{
 	 * @throws wppaSavePostException
 	 */
 	public function savePost(): self {
-		$result = wp_update_post( $this->post, true );
+		$postData = get_object_vars( $this->post );
+		$postData[ 'meta_input' ] = $this->post_meta;
+		$result = wp_update_post( $postData, true );
 		if ( empty( $result ) || is_wp_error( $result ) ){
 			$error = empty( $result ) ? new WP_Error() : $result;
 			/** @var wpPostAble $this */

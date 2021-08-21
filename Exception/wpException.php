@@ -1,5 +1,5 @@
 <?php
-namespace iTRON\Exception;
+namespace iTRON\wpPostAble\Exception;
 
 use WP_Error;
 
