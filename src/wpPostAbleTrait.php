@@ -155,6 +155,10 @@ trait wpPostAbleTrait{
 
 		$this->post = $post;
 
+		if ( $this->applyFilters( '\wpPostAbleTrait\loadPost\loadMeta', true, $this ) ) {
+			$this->post_meta = get_post_meta( $this->post->ID );
+		}
+
 		$this->doActionRef( '\wpPostAbleTrait\loadPost\loading', [ & $this ] );
 		return $this;
 	}
