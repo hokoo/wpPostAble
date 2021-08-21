@@ -73,6 +73,17 @@ trait wpPostAbleTrait{
 		return $this->loadPost( $post_id );
 	}
 
+	public function deletePost(){
+		do_action( __CLASS__ . '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post, __CLASS__ );
+		do_action( '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post, __CLASS__ );
+
+		wp_delete_post( $this->post->ID );
+		$this->post = null;
+
+		do_action( __CLASS__ . '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post, __CLASS__ );
+		do_action( '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post, __CLASS__ );
+	}
+
 	public function getPost(): WP_Post{
 		return $this->post;
 	}

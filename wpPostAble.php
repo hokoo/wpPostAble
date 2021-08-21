@@ -10,6 +10,7 @@ use WP_Post;
 interface wpPostAble{
 	public function getPost(): WP_Post;
 	public function savePost();
+	public function deletePost();
 	public function getPostType();
 	public function getTitle();
 	public function setTitle( string $title );
