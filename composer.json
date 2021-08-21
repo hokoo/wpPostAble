@@ -1,0 +1,18 @@
+{
+  "name": "vendor_name/wppostable",
+  "description": "Library provides a functionality for associating your classes with WordPress class WP_Post.",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Igor Tron",
+      "email": "public@itron.pro"
+    }
+  ],
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "iTRON\\wpPostAble\\": "src/"
+    }
+  }
+}
