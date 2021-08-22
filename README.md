@@ -22,7 +22,7 @@ and others.
 1. Create your own class based on wpPostAble interface
 
     ```php
-    use iTRON\wpPostAble;
+    use iTRON\wpPostAble\wpPostAble;
     
     class Item implements wpPostAble{
         use wpPostAbleTrait;
