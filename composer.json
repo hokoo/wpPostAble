@@ -10,7 +10,9 @@
       "email": "public@itron.pro"
     }
   ],
-  "require": {},
+  "require": {
+    "ext-json": "*"
+  },
   "autoload": {
     "psr-4": {
       "iTRON\\wpPostAble\\": "src"
