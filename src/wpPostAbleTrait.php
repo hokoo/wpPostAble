@@ -93,7 +93,7 @@ trait wpPostAbleTrait{
 
 	protected function getParam( string $param ) {
 		$data = json_decode( $this->post->post_content_filtered );
-		return $data[ $param ] ?? null;
+		return $data->$param ?? null;
 	}
 
 	protected function setParam( string $param, $value ) {
