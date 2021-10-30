@@ -1,6 +1,6 @@
 # What is wpPostAble
 
-Library provides a functionality for associating your classes with WordPress class WP_Post.
+Library provides a functionality for associating your models with WordPress WP_Post model.
 Once you create the instance, wpPostAble creates the WP_Post object and stores this in your instance.
 
 You can manage your instance with such methods as
