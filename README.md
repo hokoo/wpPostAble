@@ -54,9 +54,19 @@ and others.
    ```
 
 ## Now you are able to use your class
+
+Create new post
+
 ```php
 $item = new Item();
 ```
+
+or load from existing
+
+```php
+$item = new Item( $post_id );
+```
+
 
 Once you create an instance, wpPostAble creates new post in WordPress as a draft.
 
