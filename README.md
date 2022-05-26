@@ -5,14 +5,18 @@ Once you create the instance, wpPostAble creates the WP_Post object and stores t
 
 You can manage your instance with such methods as
 
+- $instance->getTitle();
+- $instance->setTitle();
+- $instance->getMetaField();
+- $instance->setMetaField();
+- $instance->getStatus();
+- $instance->setStatus();
 - $instance->getPost();
 - $instance->getPostType();
 - $instance->savePost();
 - $instance->loadPost();
-- $instance->getStatus();
-- $instance->setStatus();
-- $instance->getTitle();
-- $instance->setTitle();
+- $instance->publish();
+- $instance->draft();
 
 and others.
 
