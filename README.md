@@ -20,6 +20,13 @@ You can manage your instance with such methods as
 
 and others.
 
+Use 
+
+- $instance->getParam();
+- $instance->setParam();
+
+method to manage metafields, stored inside `posts` table using `post_content_filtered` field.
+
 # How to use
 ## Preparing step by step.
 
