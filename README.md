@@ -1,7 +1,7 @@
 # What is wpPostAble
 
 Library provides a functionality for associating your models with WordPress WP_Post model.
-Once you create the instance, wpPostAble creates the WP_Post object and stores this in your instance.
+Once you create the instance, wpPostAble creates the WP_Post object and stores it in your instance.
 
 You can manage your instance with such methods as
 
@@ -28,7 +28,6 @@ Use
 method to manage metafields, stored inside `posts` table using `post_content_filtered` field.
 
 # How to use
-## Preparing step by step.
 
 1. Create your own class based on wpPostAble interface
 
