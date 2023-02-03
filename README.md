@@ -1,28 +1,38 @@
 # What is wpPostAble
 
-Library provides a functionality for associating your classes with WordPress class WP_Post.
-Once you create the instance, wpPostAble creates the WP_Post object and stores this in your instance.
+Library provides a functionality for associating your models with WordPress WP_Post model.
+Once you create the instance, wpPostAble creates the WP_Post object and stores it in your instance.
 
 You can manage your instance with such methods as
 
+- $instance->getTitle();
+- $instance->setTitle();
+- $instance->getMetaField();
+- $instance->setMetaField();
+- $instance->getStatus();
+- $instance->setStatus();
 - $instance->getPost();
 - $instance->getPostType();
 - $instance->savePost();
 - $instance->loadPost();
-- $instance->getStatus();
-- $instance->setStatus();
-- $instance->getTitle();
-- $instance->setTitle();
+- $instance->publish();
+- $instance->draft();
 
 and others.
 
+Use 
+
+- $instance->getParam();
+- $instance->setParam();
+
+method to manage metafields, stored inside `posts` table using `post_content_filtered` field.
+
 # How to use
-## Preparing step by step.
 
 1. Create your own class based on wpPostAble interface
 
     ```php
-    use iTRON\wpPostAble;
+    use iTRON\wpPostAble\wpPostAble;
     
     class Item implements wpPostAble{
         use wpPostAbleTrait;
@@ -50,9 +60,19 @@ and others.
    ```
 
 ## Now you are able to use your class
+
+Create new post
+
 ```php
 $item = new Item();
 ```
+
+or load from existing
+
+```php
+$item = new Item( $post_id );
+```
+
 
 Once you create an instance, wpPostAble creates new post in WordPress as a draft.
 

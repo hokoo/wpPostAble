@@ -29,12 +29,6 @@ trait wpPostAbleTrait{
 	protected $post;
 
 	/**
-	 * @var string
-	 * @see wp_insert_post()
-	 */
-	public $status = 'draft';
-
-	/**
 	 * @var array
 	 */
 	private $post_meta = [];
@@ -58,9 +52,9 @@ trait wpPostAbleTrait{
 		if ( empty( $post_id ) ){
 			$post_id = wp_insert_post([
 				'post_type'     => $this->getPostType(),
-				'post_status'   => $this->getStatus(),
-				'post_title'    => '',
-				'post_content'  => 'Empty.',
+				'post_status'   => $this->applyFilters( '\wpPostAbleTrait\init\defaultStatus', 'draft' ),
+				'post_title'    => $this->applyFilters( '\wpPostAbleTrait\init\defaultTitle', 'draft' ),
+				'post_content'  => $this->applyFilters( '\wpPostAbleTrait\init\defaultContent', 'Empty.' ),
 			], true );
 
 			if ( empty( $post_id ) || is_wp_error( $post_id ) ){
@@ -73,15 +67,48 @@ trait wpPostAbleTrait{
 		return $this->loadPost( $post_id );
 	}
 
+	private function applyFilters( string $filterName, ...$data ){
+		array_push( $data, __CLASS__ );
+
+		$wideFilter = apply_filters( $filterName, ...$data );
+
+		return apply_filters( __CLASS__ . $filterName, $wideFilter, ...$data );
+	}
+
+	private function doAction( string $actionName, ...$data ){
+		array_push( $data, __CLASS__ );
+
+		do_action( $actionName, ...$data );
+
+		do_action( __CLASS__ . $actionName, ...$data );
+	}
+
+	private function doActionRef( string $actionName, $data ){
+		array_push( $data, __CLASS__ );
+
+		do_action( $actionName, ...$data );
+
+		do_action( __CLASS__ . $actionName, ...$data );
+	}
+
+	protected function getParam( string $param ) {
+		$data = json_decode( $this->post->post_content_filtered );
+		return $data->$param ?? null;
+	}
+
+	protected function setParam( string $param, $value ) {
+		$data = json_decode( $this->post->post_content_filtered );
+		$data->$param = $value;
+		$this->post->post_content_filtered = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+	}
+
 	public function deletePost(){
-		do_action( __CLASS__ . '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post, __CLASS__ );
-		do_action( '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post, __CLASS__ );
+		$this->doAction( '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post );
 
 		wp_delete_post( $this->post->ID );
 		$this->post = null;
 
-		do_action( __CLASS__ . '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post, __CLASS__ );
-		do_action( '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post, __CLASS__ );
+		$this->doAction( '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post );
 	}
 
 	public function getPost(): WP_Post{
@@ -123,9 +150,7 @@ trait wpPostAbleTrait{
 		}
 
 		if (
-			! apply_filters( __CLASS__ . '\wpPostAbleTrait\loadPost\equalPostType',
-				apply_filters( '\wpPostAbleTrait\loadPost\equalPostType', $post->post_type === $this->post_type, __CLASS__ ), __CLASS__
-			)
+			! $this->applyFilters( '\wpPostAbleTrait\loadPost\equalPostType', $post->post_type === $this->post_type )
 		){
 			/** @var wpPostAble $this */
 			throw new wppaLoadPostException( $post_id, $this,
@@ -135,8 +160,11 @@ trait wpPostAbleTrait{
 
 		$this->post = $post;
 
-		do_action_ref_array( '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
-		do_action_ref_array( __CLASS__ . '\wpPostAbleTrait\loadPost\loading', [ & $this, __CLASS__ ] );
+		if ( $this->applyFilters( '\wpPostAbleTrait\loadPost\loadMeta', true, $this ) ) {
+			$this->post_meta = get_post_meta( $this->post->ID );
+		}
+
+		$this->doActionRef( '\wpPostAbleTrait\loadPost\loading', [ & $this ] );
 		return $this;
 	}
 
@@ -150,11 +178,10 @@ trait wpPostAbleTrait{
 	}
 
 	public function getStatus(): string{
-		return $this->status;
+		return $this->post->post_status;
 	}
 
 	public function setStatus( string $status ): self {
-		$this->status = $status;
 		$this->post->post_status = $status;
 		return $this;
 	}
