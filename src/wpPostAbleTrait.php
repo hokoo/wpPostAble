@@ -60,7 +60,7 @@ trait wpPostAbleTrait{
 			if ( empty( $post_id ) || is_wp_error( $post_id ) ){
 				$error = empty( $post_id ) ? new WP_Error() : $post_id;
 				/** @var wpPostAble $this */
-				throw new wppaCreatePostException( $this, $error, $error->get_error_messages() );
+				throw new wppaCreatePostException( $this, $error, $error->get_error_message() );
 			}
 		}
 
@@ -129,7 +129,7 @@ trait wpPostAbleTrait{
 		if ( empty( $result ) || is_wp_error( $result ) ){
 			$error = empty( $result ) ? new WP_Error() : $result;
 			/** @var wpPostAble $this */
-			throw new wppaSavePostException( $this, $error, $error->get_error_messages() );
+			throw new wppaSavePostException( $this, $error, $error->get_error_message() );
 		}
 		return $this;
 	}
