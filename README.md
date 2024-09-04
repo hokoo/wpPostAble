@@ -5,25 +5,25 @@ Once you create the instance, wpPostAble creates the WP_Post object and stores i
 
 You can manage your instance with such methods as
 
-- $instance->getTitle();
-- $instance->setTitle();
-- $instance->getMetaField();
-- $instance->setMetaField();
-- $instance->getStatus();
-- $instance->setStatus();
-- $instance->getPost();
-- $instance->getPostType();
-- $instance->savePost();
-- $instance->loadPost();
-- $instance->publish();
-- $instance->draft();
+- `$instance->getTitle();`
+- `$instance->setTitle();`
+- `$instance->getMetaField();`
+- `$instance->setMetaField();`
+- `$instance->getStatus();`
+- `$instance->setStatus();`
+- `$instance->getPost();`
+- `$instance->getPostType();`
+- `$instance->savePost();`
+- `$instance->loadPost();`
+- `$instance->publish();`
+- `$instance->draft();`
 
 and others.
 
 Use 
 
-- $instance->getParam();
-- $instance->setParam();
+- `$instance->getParam();`
+- `$instance->setParam();`
 
 method to manage metafields, stored inside `posts` table using `post_content_filtered` field.
 
@@ -52,7 +52,7 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
        * @throws Exception\wppaLoadPostException
        * @throws Exception\wppaCreatePostException
        */
-      public function __construct() {
+      public function __construct( $post_id = null) {
          $this->wpPostAble( POST_TYPE, $post_id );
          
          // Do anything you need
@@ -94,3 +94,5 @@ You can do it by single line
 ```php
 $item->setTitle('The best item')->publish();
 ```
+
+More options you can find in the description above and in the source code.
