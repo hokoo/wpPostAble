@@ -32,11 +32,14 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
 1. Create your own class based on wpPostAble interface
 
     ```php
-    use iTRON\wpPostAble\wpPostAble;
+   use iTRON\wpPostAble\wpPostAble;
+   use iTRON\wpPostAble\wpPostAbleTrait;
+   use iTRON\wpPostAble\Exceptions\wppaCreatePostException;
+   use iTRON\wpPostAble\Exceptions\wppaLoadPostException;
     
-    class Item implements wpPostAble{
-        use wpPostAbleTrait;
-    }
+   class Item implements wpPostAble {
+      use wpPostAbleTrait;
+   }
     ```
 
 2. Call `wpPostAble()` method in the beginning of the `__construct()` method of your class.
