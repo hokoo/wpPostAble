@@ -39,7 +39,7 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
     }
     ```
 
-2. Call `wpPostAble()` method in the beginning `__construct()` of your class.
+2. Call `wpPostAble()` method in the beginning of the `__construct()` method of your class.
 
    Pass to it two parameters
 
@@ -67,7 +67,7 @@ Create new post
 $item = new Item();
 ```
 
-or load from existing
+or load from existing one
 
 ```php
 $item = new Item( $post_id );
