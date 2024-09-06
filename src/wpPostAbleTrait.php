@@ -91,12 +91,12 @@ trait wpPostAbleTrait{
 		do_action( __CLASS__ . $actionName, ...$data );
 	}
 
-	protected function getParam( string $param ) {
+	public function getParam( string $param ) {
 		$data = json_decode( $this->post->post_content_filtered );
 		return $data->$param ?? null;
 	}
 
-	protected function setParam( string $param, $value ) {
+	public function setParam( string $param, $value ) {
 		$data = json_decode( $this->post->post_content_filtered );
 		$data->$param = $value;
 		$this->post->post_content_filtered = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
