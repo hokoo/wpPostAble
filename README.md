@@ -39,6 +39,8 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
     
    class Item implements wpPostAble {
       use wpPostAbleTrait;
+      
+      const POST_TYPE = 'item';
    }
     ```
 
@@ -55,8 +57,8 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
        * @throws Exception\wppaLoadPostException
        * @throws Exception\wppaCreatePostException
        */
-      public function __construct( $post_id = null) {
-         $this->wpPostAble( POST_TYPE, $post_id );
+      public function __construct( int|null $post_id = null ) {
+         $this->wpPostAble( self::POST_TYPE, (int) $post_id );
          
          // Do anything you need
       }
