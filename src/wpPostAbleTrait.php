@@ -163,6 +163,14 @@ trait wpPostAbleTrait{
 		if ( $this->applyFilters( '\wpPostAbleTrait\loadPost\loadMeta', true, $this ) ) {
             $post_meta = get_post_meta( $this->post->ID, '', true );
             $this->post_meta = array_combine( array_keys( $post_meta ), array_column( $post_meta, 0 ) );
+
+			// Since get_metadata_raw() does not deserialize meta values if the $key not specified, we should do it manually.
+			array_walk(
+				$this->post_meta,
+				function ( & $value ) {
+					$value = maybe_unserialize( $value );
+				}
+			);
 		}
 
 		$this->doActionRef( '\wpPostAbleTrait\loadPost\loading', [ & $this ] );
