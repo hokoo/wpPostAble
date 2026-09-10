@@ -4,6 +4,7 @@
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
+- Planning PR: [#25](https://github.com/hokoo/wpPostAble/pull/25)
 - Baseline: `master` at `b1e998dac9a1d16dd969f2b2e2e2744be0a9ecd0`
 
 ## Objective
@@ -295,6 +296,7 @@ Each implementation task must, in the same PR:
 | Date | Task/Epic | Evidence | Result |
 |---|---|---|---|
 | 2026-09-11 | Planning | ADR 0001 approved; milestone and execution issues created | Pass |
+| 2026-09-11 | Planning artifact | Commit `183f428`; [PR #25](https://github.com/hokoo/wpPostAble/pull/25); [CI run 34524922288](https://github.com/hokoo/wpPostAble/actions/runs/34524922288) | Pass: 5/5 jobs |
 
 ## Transition log
 
@@ -305,5 +307,7 @@ Each implementation task must, in the same PR:
 - GitHub milestone `1.0.0` was created.
 - Existing issues #2, #3, and #4 were normalized with complete execution contracts.
 - Twelve additional execution issues were created.
+- Planning artifacts were committed on `codex/1.0-release-plan` and opened as PR #25.
+- PR #25 passed PHP 7.4/8.4 quality, coverage, and WordPress minimum/latest checks.
 - Readiness sweep: T1 and T3 are `todo`; every other task is `waiting_dependency` with an explicit upstream dependency.
 - Next decision: approve or redirect execution Batch 1 (T1 and T3).
