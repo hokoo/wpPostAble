@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; Batch 3 in review; T7a security decision gate open
+- Status: Approved; T7a completed; 0.7.0 publication gate closed
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -91,7 +91,7 @@ Tasks:
 | T1 | [#13 Document SemVer and the 1.0 public contract](https://github.com/hokoo/wpPostAble/issues/13) | `completed` | None |
 | T2 | [#14 Establish the historical changelog and release-note policy](https://github.com/hokoo/wpPostAble/issues/14) | `completed` | T1 |
 | T3 | [#15 Document local development and every test layer](https://github.com/hokoo/wpPostAble/issues/15) | `completed` | None |
-| T4 | [#16 Add contribution and pull-request documentation gates](https://github.com/hokoo/wpPostAble/issues/16) | `review` | T1, T2, T3 |
+| T4 | [#16 Add contribution and pull-request documentation gates](https://github.com/hokoo/wpPostAble/issues/16) | `completed` | T1, T2, T3 |
 
 ## E2. Release governance and 0.7.0
 
@@ -134,9 +134,9 @@ Tasks:
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
 | T5 | [#17 Enforce coverage and package-install release gates](https://github.com/hokoo/wpPostAble/issues/17) | `completed` | T3 |
-| T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `review` | T1, T2, T5 |
-| T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `review` | T5 |
-| T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `needs_design` | T6, owner approval |
+| T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `completed` | T1, T2, T5 |
+| T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `completed` | T5 |
+| T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `completed` | T6, owner approval |
 | T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `waiting_dependency` | T1–T7, T7a, publication approval |
 
 ## E3. Minimal 1.0 public API
@@ -272,7 +272,7 @@ Tasks:
 
 1. Batch 1 (`completed`): T1 and T3 in parallel — version/public-contract policy plus localdev/testing documentation.
 2. Batch 2 (`completed`): T2 and T5 — historical changelog plus enforceable release gates.
-3. Batch 3 (`review`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance; T7a follows the owner immutability decision.
+3. Batch 3 (`completed`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance; T7a follows the owner immutability decision.
 4. Gate: close T7a, repeat independent E2 security QA, then request explicit approval to publish `0.7.0` through T8.
 5. Batch 4: T9, T10, and T11 in parallel after `0.7.0`.
 6. Batch 5: T12 contract audit/freeze and independent E3 QA.
@@ -317,6 +317,8 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T6 security remediation | Commit `7c051a2`; final live remote-tag ancestry proof, immutable-release pre/post gates, exact Packagist source reference | Pass: independent re-review closed the workflow blocker |
 | 2026-09-11 | Batch 3 initial CI | [Run 34534475421](https://github.com/hokoo/wpPostAble/actions/runs/34534475421) | Expected gate failure: new `CONTRIBUTING.md` was not yet in the package allowlist |
 | 2026-09-11 | Batch 3 package remediation | Commit `b6dee5e`; `make test.package-install`; [PR CI run 34534670305](https://github.com/hokoo/wpPostAble/actions/runs/34534670305) | Pass: reviewed public-documentation allowlist and 5/5 jobs |
+| 2026-09-11 | Batch 3 final PR | [PR #29](https://github.com/hokoo/wpPostAble/pull/29); [CI run 34534813793](https://github.com/hokoo/wpPostAble/actions/runs/34534813793) | Pass: protected merge, 5/5 jobs |
+| 2026-09-11 | Batch 3 merge | Merge commit `6b2b023`; [post-merge CI run 34535010279](https://github.com/hokoo/wpPostAble/actions/runs/34535010279) | Pass: 5/5 jobs |
 
 ## Transition log
 
@@ -418,3 +420,25 @@ Each implementation task must, in the same PR:
 - The first Batch 3 CI run correctly rejected the Composer archive because the newly added root-level `CONTRIBUTING.md` was not in the exact production allowlist.
 - `CONTRIBUTING.md` is intentionally public package documentation and is linked from the packaged README, so commit `b6dee5e` added it to the allowlist instead of shipping a broken README link or weakening the boundary.
 - The local package-install smoke passed and the synchronized PR run passed all five required checks. The failed run remains linked as evidence that the release gate detects unreviewed archive-boundary changes.
+
+### 2026-09-11 — Batch 3 completed at the security gate
+
+- Final PR #29 CI passed all five required checks on `83b4214`; protected `master` reported the pull request mergeable only after those checks passed.
+- PR #29 was merged as `6b2b023`, closing T4/#16, T6/#18, and T7/#19. The post-merge run passed all five checks, including coverage/package gates and both WordPress profiles.
+- T4, T6, and T7 are `completed`; their intermediate review labels were removed from the closed issues.
+- T7a/#28 remains `needs_design`. No `0.7.0` preparation or publication work starts until the repository owner decides whether to enable release immutability.
+
+### 2026-09-11 — T7a owner decision approved
+
+- The repository owner explicitly approved enabling GitHub Release immutability for this repository.
+- T7a/#28 moved from `needs_design` to `in_progress`. The setting will be accepted only after live API read-back and independent security verification.
+- This decision does not authorize preparation or publication of `0.7.0`; the publication gate remains separate.
+
+### 2026-09-11 — T7a immutable-release control completed
+
+- The versioned GitHub API enablement request succeeded, and an immediate independent read-back returned `enabled: true`. `enforced_by_owner: false` records that no higher-level owner policy imposes the setting; repository-level enablement is active.
+- Independent read-only security QA passed with no blockers. It reconfirmed strict `master` protection, the exact five required GitHub Actions checks, admin enforcement, and disabled force-push/deletion.
+- The verification found exactly the 12 historical tags from `0.1` through `0.6.2` and 10 historical Releases, with no `0.7.0` tag or Release, no Release workflow runs, and no evidence that T7a mutated an existing release object.
+- The release workflow and runbook remain unchanged from protected `master` and satisfy T7a's preflight, post-publication `isImmutable`, remote previous-tag ancestry, future-only boundary, and exact Packagist SHA requirements.
+- PR #30's first full CI run `34536131811` passed all five required checks and reported the branch cleanly mergeable under the protected-branch policy. The final evidence-only synchronization must pass the same checks before merge.
+- Because administrators can still disable a repository-level setting, the live owner preflight remains mandatory for every publication. T7a is `completed`; T8 remains `waiting_dependency` on the separate explicit approval to prepare and publish `0.7.0`.
