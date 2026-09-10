@@ -5,6 +5,7 @@
 /.phpunit.cache/
 /coverage/
 /local-dev/
+/tests/integration/artifacts/
 /vendor/
 
 *.log

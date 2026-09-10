@@ -6,7 +6,8 @@ COMPOSE = $(DOCKER_COMPOSE) --env-file $(LOCALDEV_ENV_FILE)
 
 .PHONY: help require-env setup up down reset ps db.up php.up nginx.up php.build \
 	logs php.log php.log.clear shell php-shell nginx-shell db-shell wp \
-	composer.install smoke hosts-check hosts-add hosts-remove
+	composer.install check lint test test.unit test.integration \
+	test.integration.minimum test.integration.latest smoke hosts-check hosts-add hosts-remove
 
 help:
 	@printf '%s\n' \
@@ -24,6 +25,9 @@ help:
 		'make db-shell - open the MySQL client' \
 		'make wp ARGS="post list" - run WP-CLI in PHP' \
 		'make composer.install - install Composer dependencies in PHP' \
+		'make check  - validate Composer, lint PHP, and run unit tests' \
+		'make test   - run PHPUnit in the PHP container' \
+		'make test.integration - run clean minimum and latest WordPress profiles' \
 		'make smoke  - exercise wpPostAble against the local WordPress database' \
 		'make hosts-check|hosts-add|hosts-remove - manage the local hostname'
 
@@ -82,6 +86,26 @@ wp: php.up
 
 composer.install: php.up
 	$(COMPOSE) exec -T --workdir /workspace php composer install --no-interaction
+
+check: composer.install
+	$(COMPOSE) exec -T --workdir /workspace php composer check
+
+lint: composer.install
+	$(COMPOSE) exec -T --workdir /workspace php composer lint
+
+test: test.unit
+
+test.unit: composer.install
+	$(COMPOSE) exec -T --workdir /workspace php composer test:test-unit
+
+test.integration: composer.install
+	./scripts/test-integration.sh all
+
+test.integration.minimum: composer.install
+	./scripts/test-integration.sh minimum
+
+test.integration.latest: composer.install
+	./scripts/test-integration.sh latest
 
 smoke: php.up
 	$(COMPOSE) exec -T php wp wppostable smoke
