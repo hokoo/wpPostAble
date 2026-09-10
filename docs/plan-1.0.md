@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; Batch 2 in progress
+- Status: Approved; Batch 2 in review
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -133,7 +133,7 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T5 | [#17 Enforce coverage and package-install release gates](https://github.com/hokoo/wpPostAble/issues/17) | `in_progress` | T3 |
+| T5 | [#17 Enforce coverage and package-install release gates](https://github.com/hokoo/wpPostAble/issues/17) | `review` | T3 |
 | T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `waiting_dependency` | T1, T2, T5 |
 | T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `waiting_dependency` | T5 |
 | T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `waiting_dependency` | T1–T7, publication approval |
@@ -270,7 +270,7 @@ Tasks:
 ## Planned execution batches
 
 1. Batch 1 (`completed`): T1 and T3 in parallel — version/public-contract policy plus localdev/testing documentation.
-2. Batch 2 (`in_progress`): T2 and T5 — historical changelog plus enforceable release gates.
+2. Batch 2 (`review`): T2 and T5 — historical changelog plus enforceable release gates.
 3. Batch 3: T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
 4. Gate: independent E1/E2 QA, then explicit approval to publish `0.7.0` through T8.
 5. Batch 4: T9, T10, and T11 in parallel after `0.7.0`.
@@ -304,6 +304,8 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 1 PR | [PR #26](https://github.com/hokoo/wpPostAble/pull/26); [CI run 34527618018](https://github.com/hokoo/wpPostAble/actions/runs/34527618018) | Pass: 5/5 jobs |
 | 2026-09-11 | Batch 1 merge | Merge commit `e865dbc`; [post-merge CI run 34527776340](https://github.com/hokoo/wpPostAble/actions/runs/34527776340) | Pass: 5/5 jobs |
 | 2026-09-11 | T2 | Commit `58fe3da`; 12 local/remote tags and 10 GitHub Release records reconciled; all ref, release, and comparison links verified | Pass |
+| 2026-09-11 | T5 | Commit `e974684`; `make check`; `make coverage`; line-only and method-only negative Clover checks; `make test.package-install`; Composer 1/PHP 7.4 compatibility run; `actionlint` | Pass |
+| 2026-09-11 | T5 WordPress matrix | Artifacts `minimum-20260910T205636Z-53336-22973` and `latest-20260910T205716Z-54494-12965` | Pass: WP 6.0/PHP 7.4.33 and WP 7.1/PHP 8.4.25; zero fixtures |
 
 ## Transition log
 
@@ -346,3 +348,11 @@ Each implementation task must, in the same PR:
 - `CHANGELOG.md` reconstructs all releases from `0.1` through `0.6.2`, records the post-`0.6.2` upgrade impact planned for `0.7.0`, and defines the future Unreleased-entry policy.
 - Verification reconciled all 12 local tags with their remote SHAs and all 10 GitHub Release records. `0.2.1` and `0.3` were confirmed as tag-only; the historical prerelease/latest mismatch is recorded as a dated snapshot.
 - T2/#14 moved from `in_progress` to `review`, pending Batch 2 CI and merge.
+
+### 2026-09-11 — T5 implementation complete
+
+- Clover aggregate metrics now enforce 100% executable source lines and methods and emit a machine-readable summary; independent line-only and method-only reductions both failed with actionable diagnostics.
+- A clean Composer archive/install gate now resolves the package in an isolated workspace, performs a locked classmap-authoritative `--no-dev` install, loads every public symbol from the installed copy, and emits artifact evidence.
+- During implementation, the initial Composer archive was found to include workspace-only files. The temporary archive was deleted without opening `.env`, and the final package allowlist now rejects environment files, dependencies, local WordPress state, tests, scripts, and developer tooling.
+- The final package gate passed on PHP 8.4/Composer 2 and PHP 7.4/Composer 1.10.27. Both WordPress integration profiles passed and removed their temporary resources.
+- Root verification repeated quality, coverage, package-install, evidence, cleanup, and both negative threshold scenarios. T5/#17 moved from `in_progress` to `review`, pending Batch 2 CI and merge.
