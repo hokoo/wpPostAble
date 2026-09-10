@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; T8 release preparation and dry run in progress; publication gate closed
+- Status: Approved; E2 and 0.7.0 completed; Batch 4 ready
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -137,7 +137,7 @@ Tasks:
 | T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `completed` | T1, T2, T5 |
 | T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `completed` | T5 |
 | T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `completed` | T6, owner approval |
-| T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `in_progress` | T1–T7, T7a, staged owner approvals |
+| T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `completed` | T1–T7, T7a, staged owner approvals |
 
 ## E3. Minimal 1.0 public API
 
@@ -179,9 +179,9 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `waiting_dependency` | T8 |
-| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `waiting_dependency` | T8 |
-| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `waiting_dependency` | T8 |
+| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `todo` | T8 |
+| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `todo` | T8 |
+| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `todo` | T8 |
 | T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `waiting_dependency` | T1–T4, T9–T11 |
 
 ## E4. Release candidate and consumer validation
@@ -274,8 +274,8 @@ Tasks:
 2. Batch 2 (`completed`): T2 and T5 — historical changelog plus enforceable release gates.
 3. Batch 3 (`completed`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
 4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
-5. Batch 3b (`in_progress`): T8 release preparation and non-mutating validation; explicit owner approval remains mandatory before `publish: true`.
-6. Batch 4: T9, T10, and T11 in parallel after `0.7.0`.
+5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
+6. Batch 4 (`todo`): T9, T10, and T11 after the verified `0.7.0` baseline.
 7. Batch 5: T12 contract audit/freeze and independent E3 QA.
 8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
@@ -322,6 +322,11 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 3 merge | Merge commit `6b2b023`; [post-merge CI run 34535010279](https://github.com/hokoo/wpPostAble/actions/runs/34535010279) | Pass: 5/5 jobs |
 | 2026-09-11 | T7a immutable releases | [PR #30](https://github.com/hokoo/wpPostAble/pull/30); merge `cfcc26b`; [final PR CI run 34536313635](https://github.com/hokoo/wpPostAble/actions/runs/34536313635); [post-merge CI run 34536458166](https://github.com/hokoo/wpPostAble/actions/runs/34536458166) | Pass: live `enabled: true`, independent security QA, 5/5 jobs twice |
 | 2026-09-11 | T8 release preparation | Commit `e526bed`; independent staged security review; [PR #31](https://github.com/hokoo/wpPostAble/pull/31); [first full PR CI run 34537495465](https://github.com/hokoo/wpPostAble/actions/runs/34537495465) | Pass for preparation/dry run: exact changelog/ref checks and 5/5 jobs; publication remains NO-GO |
+| 2026-09-11 | T8 preparation merge | [Final PR CI run 34537667676](https://github.com/hokoo/wpPostAble/actions/runs/34537667676); merge `612fb575`; [post-merge CI run 34537798149](https://github.com/hokoo/wpPostAble/actions/runs/34537798149) | Pass: protected merge and 5/5 jobs twice |
+| 2026-09-11 | T8 non-mutating validation | [Release run 34537950609](https://github.com/hokoo/wpPostAble/actions/runs/34537950609); target `612fb575`; notes SHA-256 `8090afc12f40fd0bf37bece550edb53f9e1f223ffafd22d3c30692eb97f5c497` | Pass: intent and five release gates succeeded; publication job skipped; tag/Release remained absent |
+| 2026-09-11 | T8 publication | [Release run 34538775979](https://github.com/hokoo/wpPostAble/actions/runs/34538775979); [immutable Release 0.7.0](https://github.com/hokoo/wpPostAble/releases/tag/0.7.0); target `612fb575` | Pass: five gates preceded the sole mutation; stable/latest, not draft/prerelease, `isImmutable: true` |
+| 2026-09-11 | T8 distribution verification | Packagist `0.7.0.0` source/dist refs; disposable exact-version `--no-dev` install; local fetched tag | Pass: all refs `612fb575`; zero dev packages; all public symbols autoloaded |
+| 2026-09-11 | E2 independent release QA | GitHub tag/Release/API/events, workflow ordering/artifacts, Packagist/install, historical-object and branch-protection audit | Pass: no defects, blockers, missing AC, or accepted risk |
 
 ## Transition log
 
@@ -454,3 +459,13 @@ Each implementation task must, in the same PR:
 - Independent read-only review of preparation commit `e526bed` passed the changelog, ancestry, repository-state, task-contract, and mutation-boundary checks. Its staged verdict is PREPARATION/Dry-run PASS and PUBLISH NO-GO pending the final owner gate.
 - PR #31's first full CI run `34537495465` passed all five protected checks. This evidence-only synchronization must pass the same matrix before the release-preparation merge.
 - After the preparation PR merges, the exact resulting `master` SHA and successful dry-run evidence will be presented at the separate owner publication gate before any `publish: true` dispatch.
+
+### 2026-09-11 — T8 and E2 completed; E3 ready
+
+- PR #31 passed its final five protected checks, merged the prepared `0.7.0` changelog as `612fb57501486850289a04ec8d2f6041a1069a30`, and passed the five-job post-merge run.
+- Non-mutating Release run `34537950609` validated that exact SHA/date/notes, passed both PHP jobs, coverage/package installation, and both WordPress profiles, and skipped its publication job. The owner reviewed this evidence and explicitly approved the separate `publish: true` operation.
+- Immediate fail-closed preflight reconfirmed UTC date `2026-09-10`, exact remote `master`, absent tag/Release, successful dry run, and live immutable-release enablement. Publication run `34538775979` then reran every gate before its single release mutation succeeded.
+- GitHub tag and immutable stable/latest Release `0.7.0` resolve directly to `612fb57501486850289a04ec8d2f6041a1069a30`; the Release is neither draft nor prerelease, and its notes exactly match the approved SHA-256 hash.
+- Packagist exposes `0.7.0` with source and dist references at the same SHA. Disposable exact-version installation contained no development packages and autoloaded every public symbol.
+- Mandatory independent T8/E2 QA passed with no defects, blockers, missing verification, or risk acceptance. Historical tags/Releases and protected `master` rules remained unchanged apart from the one authorized `0.7.0` addition.
+- T8 and E2 are `completed`. Readiness sweep moves T9/#2, T10/#3, and T11/#4 to `todo`; T12/#21 remains `waiting_dependency` until those three API tasks complete.
