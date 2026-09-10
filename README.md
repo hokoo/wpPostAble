@@ -3,6 +3,13 @@
 Library provides a functionality for associating your models with WordPress WP_Post model.
 Once you create the instance, wpPostAble creates the WP_Post object and stores it in your instance.
 
+## Project documentation
+
+- [Versioning and compatibility policy](VERSIONING.md)
+- [Local WordPress development](docs/LOCAL-DEVELOPMENT.md)
+- [Testing and coverage](docs/TESTING.md)
+- [1.0 delivery plan](docs/plan-1.0.md)
+
 You can manage your instance with such methods as
 
 - `$instance->getTitle();`
@@ -57,7 +64,7 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
        * @throws Exception\wppaLoadPostException
        * @throws Exception\wppaCreatePostException
        */
-      public function __construct( int|null $post_id = null ) {
+      public function __construct( ?int $post_id = null ) {
          $this->wpPostAble( self::POST_TYPE, (int) $post_id );
          
          // Do anything you need
