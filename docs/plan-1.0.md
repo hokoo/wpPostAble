@@ -179,7 +179,7 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `in_progress` | T8 |
+| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `review` | T8 |
 | T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `in_progress` | T8 |
 | T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `in_progress` | T8 |
 | T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `waiting_dependency` | T1–T4, T9–T11 |
@@ -328,6 +328,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T8 distribution verification | Packagist `0.7.0.0` source/dist refs; disposable exact-version `--no-dev` install; local fetched tag | Pass: all refs `612fb575`; zero dev packages; all public symbols autoloaded |
 | 2026-09-11 | E2 independent release QA | GitHub tag/Release/API/events, workflow ordering/artifacts, Packagist/install, historical-object and branch-protection audit | Pass: no defects, blockers, missing AC, or accepted risk |
 | 2026-09-11 | T8/E2 closure | [PR #32](https://github.com/hokoo/wpPostAble/pull/32); [PR CI run 34539696113](https://github.com/hokoo/wpPostAble/actions/runs/34539696113); merge `0b05e33`; [post-merge CI run 34539817971](https://github.com/hokoo/wpPostAble/actions/runs/34539817971) | Pass: 5/5 jobs twice; #20 closed; Release remained immutable at `612fb575` |
+| 2026-09-11 | T9 implementation | `make check`; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T230625Z-28416-22771` and `latest-20260910T230711Z-29747-24204` | Pass: 45 tests/270 assertions; 174/174 lines and 39/39 methods; package install and WP 6.0/PHP 7.4 plus WP 7.1/PHP 8.4 passed with zero remaining fixtures |
 
 ## Transition log
 
@@ -477,3 +478,11 @@ Each implementation task must, in the same PR:
 - T9/#2, T10/#3, and T11/#4 moved from `todo` to `in_progress` on `codex/1.0-api-batch-4`; their approved ADR/task contracts satisfy DoR.
 - T9 has an isolated implementation owner. T10 and T11 receive parallel read-only contract/test design reviews, then implementation proceeds sequentially because all three tasks share the interface, trait, unit/integration tests, README, versioning policy, and changelog.
 - T12/#21 remains `waiting_dependency` until all three implementation tasks are delivered and verified. No RC preparation begins in Batch 4.
+
+### 2026-09-11 — T9 implementation ready for review
+
+- Initialization now accepts exactly `int|WP_Post|null` on the PHP 7.4-compatible untyped boundary. Unsupported weakly coercible values fail before WordPress calls or model mutation.
+- A supplied `WP_Post` retains object identity, bypasses insertion and lookup, and shares the existing post-type, metadata, unserialization, and loading-hook path. A type mismatch preserves the supplied object and exposes its ID and model context through `wppaLoadPostException`.
+- Unit tests cover object identity, hooks, metadata, mismatch atomicity, `null`/zero creation, and unsupported types. Both real-WordPress profiles cover the supplied-object success and mismatch paths.
+- Root verification repeated `make check`, enforced 100% line/method coverage, package-install smoke, and diff validation. Independent minimum/latest integration runs passed with zero leaked fixtures.
+- T9/#2 moved from `in_progress` to `review`; it remains open until the integrated Batch 4 PR passes protected CI and merges.

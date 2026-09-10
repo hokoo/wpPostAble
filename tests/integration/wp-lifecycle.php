@@ -130,6 +130,64 @@ try {
 	wppa_integration_assert( $structured_meta === $loaded->getMetaField( 'wppa_structured' ), 'structured meta did not survive save/reload' );
 	wppa_integration_assert( 'first value' === $loaded->getMetaField( 'wppa_multi' ), 'model did not expose the first multi-value meta row' );
 
+	$supplied_post       = $loaded->getPost();
+	$supplied_post_state = get_object_vars( $supplied_post );
+	$fixture_count       = wppa_integration_fixture_count();
+	$object_equal_calls  = array();
+	$object_meta_calls   = array();
+	$object_load_calls   = array();
+	$object_equal_filter = static function ( $equal, $class ) use ( &$object_equal_calls ) {
+		$object_equal_calls[] = array( $equal, $class );
+		return $equal;
+	};
+	$object_meta_filter = static function ( $load, $postable, $class ) use ( &$object_meta_calls ) {
+		$object_meta_calls[] = array( $load, $postable, $class );
+		return $load;
+	};
+	$object_load_action = static function ( $postable, $class ) use ( &$object_load_calls ) {
+		$object_load_calls[] = array( $postable, $class );
+	};
+	add_filter( '\wpPostAbleTrait\loadPost\equalPostType', $object_equal_filter, 10, 2 );
+	add_filter( '\wpPostAbleTrait\loadPost\loadMeta', $object_meta_filter, 10, 3 );
+	add_action( '\wpPostAbleTrait\loadPost\loading', $object_load_action, 10, 2 );
+	$object_loaded = new WpPostAbleLocalItem( $supplied_post );
+	remove_filter( '\wpPostAbleTrait\loadPost\equalPostType', $object_equal_filter, 10 );
+	remove_filter( '\wpPostAbleTrait\loadPost\loadMeta', $object_meta_filter, 10 );
+	remove_action( '\wpPostAbleTrait\loadPost\loading', $object_load_action, 10 );
+
+	wppa_integration_assert( $supplied_post === $object_loaded->getPost(), 'WP_Post object identity was not retained' );
+	wppa_integration_assert( $supplied_post_state === get_object_vars( $supplied_post ), 'compatible supplied WP_Post was mutated during initialization' );
+	wppa_integration_assert( $fixture_count === wppa_integration_fixture_count(), 'WP_Post initialization inserted another fixture post' );
+	wppa_integration_assert( $structured_meta === $object_loaded->getMetaField( 'wppa_structured' ), 'WP_Post initialization did not load structured meta' );
+	wppa_integration_assert( 'first value' === $object_loaded->getMetaField( 'wppa_multi' ), 'WP_Post initialization did not load the first multi-value row' );
+	wppa_integration_assert(
+		array( array( true, WpPostAbleLocalItem::class ) ) === $object_equal_calls,
+		'WP_Post initialization did not apply the post-type filter contract'
+	);
+	wppa_integration_assert(
+		array( array( true, $object_loaded, WpPostAbleLocalItem::class ) ) === $object_meta_calls,
+		'WP_Post initialization did not apply the metadata filter contract'
+	);
+	wppa_integration_assert(
+		array( array( $object_loaded, WpPostAbleLocalItem::class ) ) === $object_load_calls,
+		'WP_Post initialization did not emit the loading hook contract'
+	);
+
+	$mismatched_post            = clone $supplied_post;
+	$mismatched_post->post_type = 'page';
+	$mismatched_state           = get_object_vars( $mismatched_post );
+	$mismatch_exception         = null;
+	try {
+		new WpPostAbleLocalItem( $mismatched_post );
+	} catch ( \iTRON\wpPostAble\Exceptions\wppaLoadPostException $exception ) {
+		$mismatch_exception = $exception;
+	}
+	wppa_integration_assert( $mismatch_exception instanceof \iTRON\wpPostAble\Exceptions\wppaLoadPostException, 'mismatched supplied WP_Post was not rejected' );
+	wppa_integration_assert( $post_id === $mismatch_exception->getPostID(), 'mismatched supplied WP_Post exception lost its ID' );
+	wppa_integration_assert( 'wppa_item' === $mismatch_exception->getPostable()->getPostType(), 'mismatched supplied WP_Post exception lost model context' );
+	wppa_integration_assert( $mismatched_state === get_object_vars( $mismatched_post ), 'mismatched supplied WP_Post was mutated' );
+	wppa_integration_assert( $fixture_count === wppa_integration_fixture_count(), 'mismatched WP_Post initialization inserted another fixture post' );
+
 	$raw_scalar     = wppa_integration_raw_meta_values( $post_id, 'wppa_scalar' )[0];
 	$raw_structured = wppa_integration_raw_meta_values( $post_id, 'wppa_structured' )[0];
 	$multi_values   = array( 'first value', 'second value' );
@@ -271,6 +329,8 @@ try {
 			'title_and_status',
 			'empty_unicode_nested_numeric_params',
 			'param_exception_contracts',
+			'wp_post_object_identity_meta_and_hooks',
+			'wp_post_object_mismatch_context',
 			'scalar_and_serialized_structured_meta',
 			'dirty_meta_preservation_across_saves',
 			'structured_meta_raw_stability',

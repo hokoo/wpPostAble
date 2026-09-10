@@ -141,19 +141,26 @@ renamed, removed, or made private.
 The trait provides this required integration method:
 
 ```php
-private function wpPostAble(string $post_type, int $post_id = 0): self
+/** @param int|WP_Post|null $post_id */
+private function wpPostAble(string $post_type, $post_id = 0): self
 ```
 
-An adopting class calls it from its own constructor. A zero ID creates and then
-loads a persisted WordPress post; a non-zero ID loads an existing post. Repeated
-initialization of an instance that already contains a `WP_Post` returns the same
-instance without creating or loading again. Creation can throw
-`wppaCreatePostException`; loading can throw `wppaLoadPostException`.
+An adopting class calls it from its own constructor. A zero ID or `null` creates
+and then loads a persisted WordPress post; a non-zero integer loads an existing
+post through `get_post()`. A supplied `WP_Post` skips creation and lookup, retains
+the same object identity, and enters the same post-type validation, metadata,
+and loading-hook pipeline as an ID lookup. Unsupported values throw native
+`TypeError`; this includes numeric strings, floats, and booleans that PHP could
+weakly coerce through the earlier native `int` parameter. Repeated initialization
+of an instance that already contains a `WP_Post` returns the same instance
+without creating or loading again. Creation can throw `wppaCreatePostException`;
+loading can throw `wppaLoadPostException`.
 
 This method is `private` in the current trait but is documented and required by
-implementers. T12 must explicitly settle its visibility and its planned support
-for initialization from a `WP_Post`; it is not being treated as an accidental
-private helper.
+implementers. Its untyped native parameter is a PHP 7.4 compatibility boundary;
+the `int|WP_Post|null` docblock and runtime `TypeError` validation define the
+accepted union. T12 must explicitly settle its visibility; it is not being
+treated as an accidental private helper.
 
 `loadPost(int $post_id): self` is currently private even though the historical
 README lists it among instance operations. External calls are therefore not
@@ -225,6 +232,9 @@ filter is `Vendor\Item\wpPostAbleTrait\init\defaultTitle`.
   title, and content use the hook defaults above.
 - Loading requires an existing `WP_Post` whose type is accepted by the post-type
   filter.
+- Passing an existing `WP_Post` retains that exact object and does not call
+  `wp_insert_post()` or `get_post()`; metadata loading and load hooks are
+  otherwise identical to loading by ID.
 - Title, status, parameter, and arbitrary mutations made to the returned
   `WP_Post` are in memory until `savePost()`, `publish()`, or `draft()` succeeds.
 - Metadata is loaded as a single-value map. For a key with multiple database
@@ -309,7 +319,6 @@ development testing.
 The following planned work is intentionally visible rather than being silently
 treated as already stable:
 
-- initialization from a `WP_Post` object ([issue #2](https://github.com/hokoo/wpPostAble/issues/2));
 - symmetric slug accessors ([issue #3](https://github.com/hokoo/wpPostAble/issues/3));
 - symmetric menu-order accessors ([issue #4](https://github.com/hokoo/wpPostAble/issues/4));
 - adding the existing `getParam()` and `setParam()` operations to the interface;

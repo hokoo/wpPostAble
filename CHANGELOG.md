@@ -12,6 +12,18 @@ policy.
 
 ## [Unreleased]
 
+### Added
+
+- Added initialization from an existing `WP_Post` object. The model retains the
+  supplied object identity and applies the normal post-type, metadata, and load
+  lifecycle without inserting or looking up the post again.
+
+### Changed
+
+- Initialization now accepts exactly `int|WP_Post|null` and throws `TypeError`
+  for other values. Numeric strings, floats, and booleans that the earlier
+  native `int` parameter could weakly coerce must now be passed as integers.
+
 ## [0.7.0] - 2026-09-10
 
 ### Upgrade notes

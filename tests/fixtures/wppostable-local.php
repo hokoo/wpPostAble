@@ -21,7 +21,10 @@ final class WpPostAbleLocalItem implements \iTRON\wpPostAble\wpPostAble {
 
 	const POST_TYPE = 'wppa_item';
 
-	public function __construct( int $post_id = 0 ) {
+	/**
+	 * @param int|WP_Post|null $post_id Existing post or ID, or null/zero to create one.
+	 */
+	public function __construct( $post_id = 0 ) {
 		$this->wpPostAble( self::POST_TYPE, $post_id );
 	}
 }
