@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E2 and 0.7.0 completed; Batch 4 ready
+- Status: Approved; E2 and 0.7.0 completed; Batch 4 in progress
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -179,9 +179,9 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `todo` | T8 |
-| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `todo` | T8 |
-| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `todo` | T8 |
+| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `in_progress` | T8 |
+| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `in_progress` | T8 |
+| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `in_progress` | T8 |
 | T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `waiting_dependency` | T1–T4, T9–T11 |
 
 ## E4. Release candidate and consumer validation
@@ -275,7 +275,7 @@ Tasks:
 3. Batch 3 (`completed`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
 4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
-6. Batch 4 (`todo`): T9, T10, and T11 after the verified `0.7.0` baseline.
+6. Batch 4 (`in_progress`): T9, T10, and T11 after the verified `0.7.0` baseline.
 7. Batch 5: T12 contract audit/freeze and independent E3 QA.
 8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
@@ -327,6 +327,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T8 publication | [Release run 34538775979](https://github.com/hokoo/wpPostAble/actions/runs/34538775979); [immutable Release 0.7.0](https://github.com/hokoo/wpPostAble/releases/tag/0.7.0); target `612fb575` | Pass: five gates preceded the sole mutation; stable/latest, not draft/prerelease, `isImmutable: true` |
 | 2026-09-11 | T8 distribution verification | Packagist `0.7.0.0` source/dist refs; disposable exact-version `--no-dev` install; local fetched tag | Pass: all refs `612fb575`; zero dev packages; all public symbols autoloaded |
 | 2026-09-11 | E2 independent release QA | GitHub tag/Release/API/events, workflow ordering/artifacts, Packagist/install, historical-object and branch-protection audit | Pass: no defects, blockers, missing AC, or accepted risk |
+| 2026-09-11 | T8/E2 closure | [PR #32](https://github.com/hokoo/wpPostAble/pull/32); [PR CI run 34539696113](https://github.com/hokoo/wpPostAble/actions/runs/34539696113); merge `0b05e33`; [post-merge CI run 34539817971](https://github.com/hokoo/wpPostAble/actions/runs/34539817971) | Pass: 5/5 jobs twice; #20 closed; Release remained immutable at `612fb575` |
 
 ## Transition log
 
@@ -469,3 +470,10 @@ Each implementation task must, in the same PR:
 - Packagist exposes `0.7.0` with source and dist references at the same SHA. Disposable exact-version installation contained no development packages and autoloaded every public symbol.
 - Mandatory independent T8/E2 QA passed with no defects, blockers, missing verification, or risk acceptance. Historical tags/Releases and protected `master` rules remained unchanged apart from the one authorized `0.7.0` addition.
 - T8 and E2 are `completed`. Readiness sweep moves T9/#2, T10/#3, and T11/#4 to `todo`; T12/#21 remains `waiting_dependency` until those three API tasks complete.
+
+### 2026-09-11 — Batch 4 started
+
+- Evidence-only PR #32 passed all five protected checks, merged as `0b05e3344706ae24829a346a9c3c79a1746d735a`, closed T8/#20, and passed all five post-merge checks. The immutable `0.7.0` Release remained unchanged at its approved `612fb575` target.
+- T9/#2, T10/#3, and T11/#4 moved from `todo` to `in_progress` on `codex/1.0-api-batch-4`; their approved ADR/task contracts satisfy DoR.
+- T9 has an isolated implementation owner. T10 and T11 receive parallel read-only contract/test design reviews, then implementation proceeds sequentially because all three tasks share the interface, trait, unit/integration tests, README, versioning policy, and changelog.
+- T12/#21 remains `waiting_dependency` until all three implementation tasks are delivered and verified. No RC preparation begins in Batch 4.
