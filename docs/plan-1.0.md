@@ -321,6 +321,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 3 final PR | [PR #29](https://github.com/hokoo/wpPostAble/pull/29); [CI run 34534813793](https://github.com/hokoo/wpPostAble/actions/runs/34534813793) | Pass: protected merge, 5/5 jobs |
 | 2026-09-11 | Batch 3 merge | Merge commit `6b2b023`; [post-merge CI run 34535010279](https://github.com/hokoo/wpPostAble/actions/runs/34535010279) | Pass: 5/5 jobs |
 | 2026-09-11 | T7a immutable releases | [PR #30](https://github.com/hokoo/wpPostAble/pull/30); merge `cfcc26b`; [final PR CI run 34536313635](https://github.com/hokoo/wpPostAble/actions/runs/34536313635); [post-merge CI run 34536458166](https://github.com/hokoo/wpPostAble/actions/runs/34536458166) | Pass: live `enabled: true`, independent security QA, 5/5 jobs twice |
+| 2026-09-11 | T8 release preparation | Commit `e526bed`; independent staged security review; [PR #31](https://github.com/hokoo/wpPostAble/pull/31); [first full PR CI run 34537495465](https://github.com/hokoo/wpPostAble/actions/runs/34537495465) | Pass for preparation/dry run: exact changelog/ref checks and 5/5 jobs; publication remains NO-GO |
 
 ## Transition log
 
@@ -451,4 +452,5 @@ Each implementation task must, in the same PR:
 - T8/#20 moved from `waiting_dependency` to `in_progress`; T1 through T7a are complete and protected `master` at `cfcc26b` has a successful five-job post-merge run.
 - The prepared release date is `2026-09-10`, the current UTC date at task start. If UTC changes before validation, the workflow must fail closed and the date must be updated through another reviewed commit.
 - Independent read-only review of preparation commit `e526bed` passed the changelog, ancestry, repository-state, task-contract, and mutation-boundary checks. Its staged verdict is PREPARATION/Dry-run PASS and PUBLISH NO-GO pending the final owner gate.
+- PR #31's first full CI run `34537495465` passed all five protected checks. This evidence-only synchronization must pass the same matrix before the release-preparation merge.
 - After the preparation PR merges, the exact resulting `master` SHA and successful dry-run evidence will be presented at the separate owner publication gate before any `publish: true` dispatch.
