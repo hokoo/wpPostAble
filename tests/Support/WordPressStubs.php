@@ -31,6 +31,7 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		public $ID = 0;
 		public $post_title = '';
 		public $post_name = '';
+		public $menu_order = 0;
 		public $post_status = 'draft';
 		public $post_content = '';
 		public $post_content_filtered = '';

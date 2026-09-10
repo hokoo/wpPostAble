@@ -18,6 +18,10 @@ policy.
   `setSlug(string $slug): self`. Classes using `wpPostAbleTrait` receive the
   implementation automatically; manual implementations and overrides must add
   compatible methods.
+- `wpPostAble` now requires `getMenuOrder(): int` and chainable
+  `setMenuOrder(int $menuOrder): self`. Trait consumers receive the methods
+  automatically; manual implementations and overrides must add compatible
+  methods. Existing stored posts require no migration.
 
 ### Added
 
@@ -27,6 +31,9 @@ policy.
 - Added symmetric accessors for `WP_Post::post_name`. Slug mutation remains
   in-memory until the existing save lifecycle delegates normalization,
   uniqueness, and persistence to WordPress Core.
+- Added symmetric accessors for the integer `WP_Post::menu_order` field. Values
+  remain in memory until explicitly saved; the library applies no range or
+  reordering policy.
 
 ### Changed
 

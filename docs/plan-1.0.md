@@ -181,7 +181,7 @@ Tasks:
 |---|---|---|---|
 | T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `review` | T8 |
 | T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `review` | T8 |
-| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `in_progress` | T8 |
+| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `review` | T8 |
 | T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `waiting_dependency` | T1–T4, T9–T11 |
 
 ## E4. Release candidate and consumer validation
@@ -330,6 +330,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T8/E2 closure | [PR #32](https://github.com/hokoo/wpPostAble/pull/32); [PR CI run 34539696113](https://github.com/hokoo/wpPostAble/actions/runs/34539696113); merge `0b05e33`; [post-merge CI run 34539817971](https://github.com/hokoo/wpPostAble/actions/runs/34539817971) | Pass: 5/5 jobs twice; #20 closed; Release remained immutable at `612fb575` |
 | 2026-09-11 | T9 implementation | `make check`; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T230625Z-28416-22771` and `latest-20260910T230711Z-29747-24204` | Pass: 45 tests/270 assertions; 174/174 lines and 39/39 methods; package install and WP 6.0/PHP 7.4 plus WP 7.1/PHP 8.4 passed with zero remaining fixtures |
 | 2026-09-11 | T10 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T231637Z-35090-18841` and `latest-20260910T231756Z-36534-31869` | Pass: 51 tests/309 assertions on PHP 7.4/8.4; 177/177 lines and 41/41 methods; package install and both WordPress edges passed with zero remaining fixtures |
+| 2026-09-11 | T11 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; `make smoke`; integration artifacts `minimum-20260910T232558Z-42780-14671` and `latest-20260910T232631Z-44008-10331` | Pass: 59 tests/354 assertions on PHP 7.4/8.4; 180/180 lines and 43/43 methods; localdev, package install, and both WordPress edges passed with zero remaining fixtures |
 
 ## Transition log
 
@@ -495,3 +496,12 @@ Each implementation task must, in the same PR:
 - Dedicated unit tests freeze the interface signatures, exact save payload, no-autosave behavior, and failed-save/retry state. Real-WordPress tests cover Core normalization, reload, and stability across later title, metadata, publish, and draft saves.
 - README, versioning/migration policy, changelog, and testing documentation now describe the slug contract and the requirement for manual interface implementations.
 - PHP 7.4 and 8.4 unit checks, enforced 100% line/method coverage, package installation, and both WordPress integration edges passed. T10/#3 moved to `review` pending Batch 4 protected CI and merge.
+
+### 2026-09-11 — T11 implementation ready for review
+
+- The interface and trait now expose typed, symmetric `getMenuOrder(): int` and chainable `setMenuOrder(int $menuOrder): self` operations over `WP_Post::menu_order`.
+- The setter accepts any integer, changes only in-memory state, and does not reorder posts or save automatically. The existing save lifecycle persists the field without introducing a separate range or query policy.
+- Dedicated unit tests freeze the interface signatures, zero/positive/negative values, exact save payload, no-autosave behavior, and failed-save/retry state.
+- Both real-WordPress profiles proved positive, zero, and negative persistence. A forced Core `WP_Error` left the database at zero while retaining `-7` in memory; retry then persisted `-7` without changing title, status, content, parameters, metadata, or slug.
+- README, versioning/migration policy, changelog, and testing documentation describe the contract and manual-interface migration. Root repeated unit, coverage, package-install, localdev smoke, and diff checks.
+- T11/#4 moved to `review` pending integrated Batch 4 QA, protected CI, and merge.

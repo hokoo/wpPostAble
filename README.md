@@ -19,6 +19,8 @@ You can manage your instance with such methods as
 - `$instance->setTitle();`
 - `$instance->getSlug();`
 - `$instance->setSlug();`
+- `$instance->getMenuOrder();`
+- `$instance->setMenuOrder();`
 - `$instance->getMetaField();`
 - `$instance->setMetaField();`
 - `$instance->getStatus();`
@@ -121,7 +123,13 @@ Set a slug through the same in-memory, chainable API:
 $item->setSlug('the-best-item');
 ```
 
-The title and slug are still only in memory. Persist them explicitly:
+Set WordPress's integer `menu_order` field in memory in the same way:
+
+```php
+$item->setMenuOrder(-7);
+```
+
+The title, slug, and menu order are still only in memory. Persist them explicitly:
 
 ```php
 $item->savePost();
@@ -134,7 +142,12 @@ it unique. Reload the model to observe the persisted Core value:
 ```php
 $item = new Item( $item->getPost()->ID );
 $slug = $item->getSlug();
+$menuOrder = $item->getMenuOrder();
 ```
+
+New posts start with menu order `0`. `setMenuOrder()` accepts any integer and
+does not save automatically. The library does not impose a range, reorder other
+posts, or change how WordPress queries use `menu_order`.
 
 Maybe it's time to publish?
 ```php
@@ -143,7 +156,7 @@ $item->publish();
 
 You can do it by single line
 ```php
-$item->setTitle('The best item')->setSlug('the-best-item')->publish();
+$item->setTitle('The best item')->setSlug('the-best-item')->setMenuOrder(-7)->publish();
 ```
 
 More options you can find in the description above and in the source code.

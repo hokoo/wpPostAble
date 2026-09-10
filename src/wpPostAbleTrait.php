@@ -325,6 +325,15 @@ trait wpPostAbleTrait{
 		return $this;
 	}
 
+	public function getMenuOrder(): int{
+		return (int) $this->post->menu_order;
+	}
+
+	public function setMenuOrder( int $menuOrder ): self {
+		$this->post->menu_order = $menuOrder;
+		return $this;
+	}
+
 	public function getStatus(): string{
 		return $this->post->post_status;
 	}
