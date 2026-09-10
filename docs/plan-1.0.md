@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; Batch 3 in progress
+- Status: Approved; Batch 3 in independent QA
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -134,7 +134,7 @@ Tasks:
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
 | T5 | [#17 Enforce coverage and package-install release gates](https://github.com/hokoo/wpPostAble/issues/17) | `completed` | T3 |
-| T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `in_progress` | T1, T2, T5 |
+| T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `review` | T1, T2, T5 |
 | T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `review` | T5 |
 | T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `waiting_dependency` | T1–T7, publication approval |
 
@@ -271,7 +271,7 @@ Tasks:
 
 1. Batch 1 (`completed`): T1 and T3 in parallel — version/public-contract policy plus localdev/testing documentation.
 2. Batch 2 (`completed`): T2 and T5 — historical changelog plus enforceable release gates.
-3. Batch 3 (`in_progress`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
+3. Batch 3 (`review`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
 4. Gate: independent E1/E2 QA, then explicit approval to publish `0.7.0` through T8.
 5. Batch 4: T9, T10, and T11 in parallel after `0.7.0`.
 6. Batch 5: T12 contract audit/freeze and independent E3 QA.
@@ -310,6 +310,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 2 merge | Merge commit `26426f4`; [post-merge CI run 34530717523](https://github.com/hokoo/wpPostAble/actions/runs/34530717523) | Pass: 5/5 jobs |
 | 2026-09-11 | T7 | GitHub protection/repository API read-back; old branch head `4390e21`; `git merge-base --is-ancestor`; unique commit count `0` | Pass |
 | 2026-09-11 | T4 | Commit `ca15664`; internal-link and Make-target audit; template structure; `make help`; `git diff --check` | Pass |
+| 2026-09-11 | T6 | Commit `c8f59c1`; actionlint 1.7.12/ShellCheck 0.11.0; permission/YAML invariants; SemVer/changelog negative cases; exact-version `0.6.2` Composer install | Pass; publication intentionally not run |
 
 ## Transition log
 
@@ -382,3 +383,10 @@ Each implementation task must, in the same PR:
 - The pull-request template requires linked intent, before/after behavior, one SemVer choice, compatibility risks, all verification rows, documentation/changelog decisions, and final secret/artifact checks.
 - README and the Unreleased changelog now expose the contribution workflow. Every internal link and referenced Make target was verified against the repository.
 - T4/#16 moved from `in_progress` to `review`, pending Batch 3 CI, merge, and independent E1 documentation QA.
+
+### 2026-09-11 — T6 implementation complete; independent QA started
+
+- The manual release workflow accepts an explicit full SemVer, full `master` SHA, UTC date, and `publish` boolean. Dry runs execute all five release gates without a write-capable job.
+- The final publication job alone receives `contents: write`, requires both the original and rerun actor to be the repository owner, revalidates the target, notes hash, changelog links, and tag/Release absence, then performs one `gh release create` operation.
+- The runbook documents preparation, non-mutating validation, the owner publication gate, exact-ref GitHub/Packagist checks, and immutable stop/recovery boundaries. Its Composer verification sequence was executed against `0.6.2`.
+- T6/#18 moved from `in_progress` to `review`. Independent E1 documentation QA and E2 workflow/security/governance QA are running before Batch 3 can merge.
