@@ -315,6 +315,8 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | E1 independent QA | SemVer/history, localdev/testing, contribution/template, links/commands, archive boundary, and documentation-language audit | Pass; no blockers |
 | 2026-09-11 | E2 independent security QA | Live release-immutability API and release-workflow TOCTOU review; [#28](https://github.com/hokoo/wpPostAble/issues/28) | Fail for publication: release immutability disabled; previous tag not revalidated in final job |
 | 2026-09-11 | T6 security remediation | Commit `7c051a2`; final live remote-tag ancestry proof, immutable-release pre/post gates, exact Packagist source reference | Pass: independent re-review closed the workflow blocker |
+| 2026-09-11 | Batch 3 initial CI | [Run 34534475421](https://github.com/hokoo/wpPostAble/actions/runs/34534475421) | Expected gate failure: new `CONTRIBUTING.md` was not yet in the package allowlist |
+| 2026-09-11 | Batch 3 package remediation | Commit `b6dee5e`; `make test.package-install`; [PR CI run 34534670305](https://github.com/hokoo/wpPostAble/actions/runs/34534670305) | Pass: reviewed public-documentation allowlist and 5/5 jobs |
 
 ## Transition log
 
@@ -410,3 +412,9 @@ Each implementation task must, in the same PR:
 - The runbook adds the owner-side Administration-read immutability preflight without adding a workflow administration secret. Post-publication verification requires `isImmutable: true`, and Packagist verification requires the installed source reference to equal the approved SHA.
 - Independent security re-review passed the code, permissions, quoting, ordering, future-only immutability semantics, and exact-SHA checks. T6/#18 returned to `review` for Batch 3 CI and merge.
 - The sole residual publication blocker is T7a: the live GitHub release-immutability setting remains disabled pending explicit owner approval.
+
+### 2026-09-11 — Batch 3 package gate finding resolved
+
+- The first Batch 3 CI run correctly rejected the Composer archive because the newly added root-level `CONTRIBUTING.md` was not in the exact production allowlist.
+- `CONTRIBUTING.md` is intentionally public package documentation and is linked from the packaged README, so commit `b6dee5e` added it to the allowlist instead of shipping a broken README link or weakening the boundary.
+- The local package-install smoke passed and the synchronized PR run passed all five required checks. The failed run remains linked as evidence that the release gate detects unreviewed archive-boundary changes.
