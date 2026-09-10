@@ -1,0 +1,572 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Full unprefixed SemVer (for example, 1.0.0-rc.1)
+        required: true
+        type: string
+      target_sha:
+        description: Exact 40-character SHA selected from master
+        required: true
+        type: string
+      release_date:
+        description: Release date in UTC (YYYY-MM-DD)
+        required: true
+        type: string
+      publish:
+        description: Publish after every release gate passes
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wppostable-release
+  cancel-in-progress: false
+
+jobs:
+  release-intent:
+    name: Validate release intent
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      target_sha: ${{ steps.validate.outputs.target_sha }}
+      release_date: ${{ steps.validate.outputs.release_date }}
+      prerelease: ${{ steps.validate.outputs.prerelease }}
+      notes_sha256: ${{ steps.validate.outputs.notes_sha256 }}
+    steps:
+      - name: Check out the selected master commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate target, version, changelog, and remote state
+        id: validate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          SERVER_URL: ${{ github.server_url }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_REF_TYPE: ${{ github.ref_type }}
+          EVENT_SHA: ${{ github.sha }}
+          VERSION: ${{ inputs.version }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          RELEASE_DATE: ${{ inputs.release_date }}
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          set -Eeuo pipefail
+
+          fail() {
+            printf 'Release validation failed: %s\n' "$1" >&2
+            exit 1
+          }
+
+          count_exact_line() {
+            # awk, not Bash, expands its field expression.
+            # shellcheck disable=SC2016
+            awk -v expected="$1" '$0 == expected { count++ } END { print count + 0 }' "$2"
+          }
+
+          assert_release_absent() {
+            local error_file="${RUNNER_TEMP}/release-query.err"
+            : > "${error_file}"
+            if gh api \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "/repos/${REPOSITORY}/releases/tags/${VERSION}" \
+              --silent >/dev/null 2>"${error_file}"; then
+              fail "GitHub Release ${VERSION} already exists"
+            fi
+            if ! grep -Fq 'HTTP 404' "${error_file}"; then
+              cat "${error_file}" >&2
+              fail "could not prove that GitHub Release ${VERSION} is absent"
+            fi
+          }
+
+          semver_regex='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
+          [[ "${VERSION}" =~ ${semver_regex} ]] || fail "version must be a full unprefixed SemVer"
+          [[ "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]] || fail "target_sha must be a lowercase, full 40-character commit SHA"
+          [[ "${RELEASE_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "release_date must use YYYY-MM-DD"
+
+          canonical_date="$(date -u -d "${RELEASE_DATE}" '+%F' 2>/dev/null || true)"
+          [[ "${canonical_date}" == "${RELEASE_DATE}" ]] || fail "release_date is not a real calendar date"
+          [[ "${RELEASE_DATE}" == "$(date -u '+%F')" ]] || fail "release_date must be today's UTC date"
+
+          [[ "${EVENT_REF_TYPE}" == 'branch' ]] || fail "workflow must be dispatched from a branch"
+          [[ "${EVENT_REF}" == 'refs/heads/master' ]] || fail "workflow must be dispatched from master"
+          [[ "${TARGET_SHA}" == "${EVENT_SHA}" ]] || fail "target_sha must equal the master commit selected for this run"
+          [[ "$(git rev-parse HEAD)" == "${TARGET_SHA}" ]] || fail "checkout does not match target_sha"
+          [[ -z "$(git status --porcelain)" ]] || fail "release checkout is not clean"
+
+          if [[ "${PUBLISH}" == 'true' ]] && \
+            [[ "${ACTOR}" != "${REPOSITORY_OWNER}" || "${TRIGGERING_ACTOR}" != "${REPOSITORY_OWNER}" ]]; then
+            fail "only the repository owner may publish or rerun publication; use publish=false for validation"
+          fi
+
+          git fetch --no-tags --force origin refs/heads/master:refs/remotes/origin/master
+          git merge-base --is-ancestor "${TARGET_SHA}" refs/remotes/origin/master || \
+            fail "target_sha is no longer contained in current master"
+
+          if git show-ref --verify --quiet "refs/tags/${VERSION}"; then
+            fail "local tag ${VERSION} already exists"
+          fi
+          if [[ -n "$(git ls-remote --tags origin "refs/tags/${VERSION}")" ]]; then
+            fail "remote tag ${VERSION} already exists"
+          fi
+          assert_release_absent
+
+          heading="## [${VERSION}] - ${RELEASE_DATE}"
+          [[ "$(count_exact_line "${heading}" CHANGELOG.md)" == '1' ]] || \
+            fail "CHANGELOG.md must contain exactly one '${heading}' heading"
+          if grep -Fqx "## [Unreleased] — planned for ${VERSION}" CHANGELOG.md; then
+            fail "the release section is still marked Unreleased"
+          fi
+
+          notes_file="${RUNNER_TEMP}/release-notes.md"
+          # awk owns all field and counter variables below.
+          # shellcheck disable=SC2016
+          awk -v heading="${heading}" '
+            $0 == heading { inside = 1; next }
+            inside && /^## / { exit }
+            inside {
+              if (!started && $0 == "") next
+              started = 1
+              lines[++count] = $0
+              if ($0 != "") last = count
+            }
+            END {
+              for (i = 1; i <= last; i++) print lines[i]
+            }
+          ' CHANGELOG.md > "${notes_file}"
+          [[ -s "${notes_file}" ]] || fail "release changelog section is empty"
+          grep -Eq '^### ' "${notes_file}" || fail "release changelog section needs at least one subsection"
+
+          unreleased_link="[Unreleased]: ${SERVER_URL}/${REPOSITORY}/compare/${VERSION}...HEAD"
+          [[ "$(count_exact_line "${unreleased_link}" CHANGELOG.md)" == '1' ]] || \
+            fail "CHANGELOG.md must contain exactly '${unreleased_link}'"
+
+          release_prefix="[${VERSION}]: ${SERVER_URL}/${REPOSITORY}/compare/"
+          release_suffix="...${VERSION}"
+          mapfile -t release_links < <(
+            # awk, not Bash, expands its field expression.
+            # shellcheck disable=SC2016
+            awk -v prefix="[${VERSION}]:" 'index($0, prefix) == 1 { print }' CHANGELOG.md
+          )
+          [[ "${#release_links[@]}" == '1' ]] || fail "CHANGELOG.md must contain exactly one comparison link for ${VERSION}"
+          [[ "${release_links[0]}" == "${release_prefix}"*"${release_suffix}" ]] || \
+            fail "the ${VERSION} comparison link must end at the release tag"
+
+          previous_version="${release_links[0]#"${release_prefix}"}"
+          previous_version="${previous_version%"${release_suffix}"}"
+          [[ -n "${previous_version}" && "${previous_version}" != "${VERSION}" ]] || \
+            fail "the ${VERSION} comparison link needs a distinct previous tag"
+          git check-ref-format "refs/tags/${previous_version}" >/dev/null || \
+            fail "the previous comparison ref is not a valid tag name"
+          git show-ref --verify --quiet "refs/tags/${previous_version}" || \
+            fail "previous tag ${previous_version} does not exist locally"
+          git merge-base --is-ancestor "refs/tags/${previous_version}^{commit}" "${TARGET_SHA}" || \
+            fail "previous tag ${previous_version} is not an ancestor of target_sha"
+
+          version_without_build="${VERSION%%+*}"
+          prerelease='false'
+          if [[ "${version_without_build}" == *-* ]]; then
+            prerelease='true'
+          fi
+          # awk, not Bash, expands its field expression.
+          # shellcheck disable=SC2016
+          notes_sha256="$(sha256sum "${notes_file}" | awk '{ print $1 }')"
+
+          {
+            printf 'version=%s\n' "${VERSION}"
+            printf 'target_sha=%s\n' "${TARGET_SHA}"
+            printf 'release_date=%s\n' "${RELEASE_DATE}"
+            printf 'prerelease=%s\n' "${prerelease}"
+            printf 'notes_sha256=%s\n' "${notes_sha256}"
+          } >> "${GITHUB_OUTPUT}"
+
+          {
+            printf '## Validated release intent\n\n'
+            printf -- "- Version: \`%s\`\n" "${VERSION}"
+            printf -- "- Target: \`%s\`\n" "${TARGET_SHA}"
+            printf -- "- Release date: \`%s\`\n" "${RELEASE_DATE}"
+            printf -- "- Prerelease: \`%s\`\n" "${prerelease}"
+            printf -- "- Publish requested: \`%s\`\n" "${PUBLISH}"
+            printf -- "- Release notes SHA-256: \`%s\`\n" "${notes_sha256}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload validated release notes
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-intent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-notes.md
+          if-no-files-found: error
+          retention-days: 30
+
+  php-quality:
+    name: Release PHP quality / PHP ${{ matrix.php }}
+    needs: release-intent
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '7.4'
+          - '8.4'
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, filter, json, libxml, mbstring, tokenizer, xmlwriter
+          coverage: none
+          tools: composer:v2
+
+      - name: Locate Composer cache
+        id: composer-cache
+        shell: bash
+        run: echo "dir=$(composer config cache-files-dir)" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore Composer package cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-release-php-${{ matrix.php }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-php-${{ matrix.php }}-composer-
+
+      - name: Validate Composer metadata
+        run: composer validate --strict --no-interaction
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Audit Composer dependencies
+        run: composer audit --no-interaction
+
+      - name: Lint PHP
+        run: composer lint
+
+      - name: Run unit tests
+        run: composer test:test-unit
+
+  coverage:
+    name: Release coverage and package / PHP 8.4
+    needs: release-intent
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up PHP 8.4 with Xdebug
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.4'
+          extensions: dom, filter, json, libxml, mbstring, tokenizer, xmlwriter, zip
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Locate Composer cache
+        id: composer-cache
+        shell: bash
+        run: echo "dir=$(composer config cache-files-dir)" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore Composer package cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-release-coverage-php-8.4-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-coverage-php-8.4-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Generate and enforce Clover coverage
+        run: composer test:coverage
+
+      - name: Verify production package install
+        if: ${{ !cancelled() }}
+        run: composer test:package-install
+
+      - name: Upload coverage gate evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-coverage-php-8.4-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            coverage/clover.xml
+            coverage/summary.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload package-install gate evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-package-install-php-8.4-${{ github.run_id }}-${{ github.run_attempt }}
+          path: coverage/package-install.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  wordpress-integration:
+    name: Release WordPress integration / ${{ matrix.profile }}
+    needs: release-intent
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - minimum
+          - latest
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up PHP for Composer
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.4'
+          extensions: dom, filter, json, libxml, mbstring, tokenizer, xmlwriter
+          coverage: none
+          tools: composer:v2
+
+      - name: Locate Composer cache
+        id: composer-cache
+        shell: bash
+        run: echo "dir=$(composer config cache-files-dir)" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore Composer package cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-release-integration-${{ matrix.profile }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-integration-${{ matrix.profile }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run ${{ matrix.profile }} integration profile
+        run: scripts/test-integration.sh "${{ matrix.profile }}"
+
+      - name: Upload integration failure diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-integration-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tests/integration/artifacts/
+          if-no-files-found: warn
+          retention-days: 30
+
+  publish-release:
+    name: Publish immutable GitHub Release
+    if: ${{ inputs.publish }}
+    needs:
+      - release-intent
+      - php-quality
+      - coverage
+      - wordpress-integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the validated commit without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Revalidate and publish exactly once
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          SERVER_URL: ${{ github.server_url }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_SHA: ${{ github.sha }}
+          VERSION: ${{ needs.release-intent.outputs.version }}
+          TARGET_SHA: ${{ needs.release-intent.outputs.target_sha }}
+          RELEASE_DATE: ${{ needs.release-intent.outputs.release_date }}
+          PRERELEASE: ${{ needs.release-intent.outputs.prerelease }}
+          EXPECTED_NOTES_SHA256: ${{ needs.release-intent.outputs.notes_sha256 }}
+        run: |
+          set -Eeuo pipefail
+
+          fail() {
+            printf 'Publication stopped: %s\n' "$1" >&2
+            exit 1
+          }
+
+          count_exact_line() {
+            # awk, not Bash, expands its field expression.
+            # shellcheck disable=SC2016
+            awk -v expected="$1" '$0 == expected { count++ } END { print count + 0 }' "$2"
+          }
+
+          assert_release_absent() {
+            local error_file="${RUNNER_TEMP}/publish-release-query.err"
+            : > "${error_file}"
+            if gh api \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "/repos/${REPOSITORY}/releases/tags/${VERSION}" \
+              --silent >/dev/null 2>"${error_file}"; then
+              fail "GitHub Release ${VERSION} already exists"
+            fi
+            if ! grep -Fq 'HTTP 404' "${error_file}"; then
+              cat "${error_file}" >&2
+              fail "could not prove that GitHub Release ${VERSION} is absent"
+            fi
+          }
+
+          semver_regex='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
+          [[ "${VERSION}" =~ ${semver_regex} ]] || fail "validated version output is not full SemVer"
+          [[ "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]] || fail "validated target output is not a full SHA"
+          [[ "${RELEASE_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "validated date output is malformed"
+          [[ "${PRERELEASE}" == 'true' || "${PRERELEASE}" == 'false' ]] || fail "validated prerelease output is malformed"
+          [[ "${ACTOR}" == "${REPOSITORY_OWNER}" ]] || fail "only the repository owner may publish"
+          [[ "${TRIGGERING_ACTOR}" == "${REPOSITORY_OWNER}" ]] || fail "only the repository owner may rerun publication"
+          [[ "${EVENT_REF}" == 'refs/heads/master' ]] || fail "workflow is no longer associated with master"
+          [[ "${EVENT_SHA}" == "${TARGET_SHA}" ]] || fail "event SHA no longer matches validated target"
+          [[ "$(git rev-parse HEAD)" == "${TARGET_SHA}" ]] || fail "publication checkout does not match target"
+          [[ -z "$(git status --porcelain)" ]] || fail "publication checkout is not clean"
+
+          git fetch --no-tags --force origin refs/heads/master:refs/remotes/origin/master
+          git merge-base --is-ancestor "${TARGET_SHA}" refs/remotes/origin/master || \
+            fail "target_sha is no longer contained in current master"
+
+          if git show-ref --verify --quiet "refs/tags/${VERSION}"; then
+            fail "local tag ${VERSION} appeared after validation"
+          fi
+          if [[ -n "$(git ls-remote --tags origin "refs/tags/${VERSION}")" ]]; then
+            fail "remote tag ${VERSION} appeared after validation"
+          fi
+          assert_release_absent
+
+          heading="## [${VERSION}] - ${RELEASE_DATE}"
+          [[ "$(count_exact_line "${heading}" CHANGELOG.md)" == '1' ]] || fail "release heading changed after validation"
+          notes_file="${RUNNER_TEMP}/publish-release-notes.md"
+          # awk owns all field and counter variables below.
+          # shellcheck disable=SC2016
+          awk -v heading="${heading}" '
+            $0 == heading { inside = 1; next }
+            inside && /^## / { exit }
+            inside {
+              if (!started && $0 == "") next
+              started = 1
+              lines[++count] = $0
+              if ($0 != "") last = count
+            }
+            END {
+              for (i = 1; i <= last; i++) print lines[i]
+            }
+          ' CHANGELOG.md > "${notes_file}"
+          [[ -s "${notes_file}" ]] || fail "release notes became empty"
+          grep -Eq '^### ' "${notes_file}" || fail "release notes lost all subsections"
+          # awk, not Bash, expands its field expression.
+          # shellcheck disable=SC2016
+          actual_notes_sha256="$(sha256sum "${notes_file}" | awk '{ print $1 }')"
+          [[ "${actual_notes_sha256}" == "${EXPECTED_NOTES_SHA256}" ]] || fail "release notes changed after validation"
+
+          unreleased_link="[Unreleased]: ${SERVER_URL}/${REPOSITORY}/compare/${VERSION}...HEAD"
+          [[ "$(count_exact_line "${unreleased_link}" CHANGELOG.md)" == '1' ]] || fail "Unreleased comparison link changed"
+          release_prefix="[${VERSION}]: ${SERVER_URL}/${REPOSITORY}/compare/"
+          release_suffix="...${VERSION}"
+          mapfile -t release_links < <(
+            # awk, not Bash, expands its field expression.
+            # shellcheck disable=SC2016
+            awk -v prefix="[${VERSION}]:" 'index($0, prefix) == 1 { print }' CHANGELOG.md
+          )
+          [[ "${#release_links[@]}" == '1' ]] || fail "release comparison link changed"
+          [[ "${release_links[0]}" == "${release_prefix}"*"${release_suffix}" ]] || fail "release comparison link is malformed"
+
+          release_arguments=(
+            release create "${VERSION}"
+            --repo "${REPOSITORY}"
+            --target "${TARGET_SHA}"
+            --title "${VERSION}"
+            --notes-file "${notes_file}"
+          )
+          if [[ "${PRERELEASE}" == 'true' ]]; then
+            release_arguments+=(--prerelease --latest=false)
+          else
+            release_arguments+=(--latest)
+          fi
+
+          gh "${release_arguments[@]}"
+
+          git fetch --no-tags origin "refs/tags/${VERSION}:refs/tags/${VERSION}"
+          [[ "$(git rev-parse "refs/tags/${VERSION}^{commit}")" == "${TARGET_SHA}" ]] || \
+            fail "published tag does not resolve to target_sha"
+
+          actual_tag="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json tagName --jq '.tagName')"
+          actual_target="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json targetCommitish --jq '.targetCommitish')"
+          actual_prerelease="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json isPrerelease --jq '.isPrerelease')"
+          actual_draft="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json isDraft --jq '.isDraft')"
+          release_url="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json url --jq '.url')"
+
+          [[ "${actual_tag}" == "${VERSION}" ]] || fail "GitHub Release tag does not match the version"
+          [[ "${actual_target}" == "${TARGET_SHA}" ]] || fail "GitHub Release target does not match target_sha"
+          [[ "${actual_prerelease}" == "${PRERELEASE}" ]] || fail "GitHub prerelease flag is incorrect"
+          [[ "${actual_draft}" == 'false' ]] || fail "GitHub Release unexpectedly remained a draft"
+
+          latest_error="${RUNNER_TEMP}/latest-release-query.err"
+          : > "${latest_error}"
+          if latest_tag="$(gh api "/repos/${REPOSITORY}/releases/latest" --jq '.tag_name' 2>"${latest_error}")"; then
+            if [[ "${PRERELEASE}" == 'true' ]]; then
+              [[ "${latest_tag}" != "${VERSION}" ]] || fail "a prerelease was incorrectly marked latest"
+            else
+              [[ "${latest_tag}" == "${VERSION}" ]] || fail "stable release was not marked latest"
+            fi
+          elif [[ "${PRERELEASE}" == 'true' ]] && grep -Fq 'HTTP 404' "${latest_error}"; then
+            : # A repository with only prereleases has no latest stable release.
+          else
+            cat "${latest_error}" >&2
+            fail "could not verify latest-release state"
+          fi
+
+          {
+            printf '## Published immutable release\n\n'
+            printf -- '- Release: [%s](%s)\n' "${VERSION}" "${release_url}"
+            printf -- "- Target: \`%s\`\n" "${TARGET_SHA}"
+            printf -- "- Prerelease: \`%s\`\n" "${PRERELEASE}"
+          } >> "${GITHUB_STEP_SUMMARY}"

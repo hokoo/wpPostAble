@@ -78,6 +78,7 @@ change can still alter public policy or a supported workflow. -->
 - [ ] `VERSIONING.md`
 - [ ] `docs/LOCAL-DEVELOPMENT.md`
 - [ ] `docs/TESTING.md`
+- [ ] `docs/RELEASING.md`
 - [ ] `CONTRIBUTING.md` or repository templates
 - [ ] Public code/API documentation
 - [ ] Other documentation named below
@@ -111,4 +112,5 @@ https://github.com/hokoo/wpPostAble/blob/master/VERSIONING.md
 https://github.com/hokoo/wpPostAble/blob/master/CHANGELOG.md
 https://github.com/hokoo/wpPostAble/blob/master/docs/TESTING.md
 https://github.com/hokoo/wpPostAble/blob/master/docs/LOCAL-DEVELOPMENT.md
+https://github.com/hokoo/wpPostAble/blob/master/docs/RELEASING.md
 -->

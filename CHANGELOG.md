@@ -37,6 +37,9 @@ policy.
 - Added enforceable 100% source line and method coverage gates plus a
   production Composer artifact-install smoke check, with machine-readable
   evidence for both.
+- Added a manual, least-privilege release workflow and runbook with a
+  non-mutating validation mode, exact-commit gates, immutable publication, and
+  post-release Packagist verification.
 - Added formal versioning, compatibility, local-development, testing, and
   contribution/PR evidence policies for the path to 1.0.
 

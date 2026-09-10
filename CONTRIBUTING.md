@@ -21,6 +21,8 @@ Read the sources of truth relevant to the change:
   layer.
 - [docs/LOCAL-DEVELOPMENT.md](docs/LOCAL-DEVELOPMENT.md) describes the
   persistent local WordPress environment.
+- [docs/RELEASING.md](docs/RELEASING.md) defines the owner-controlled release
+  preparation, validation, publication, and verification flow.
 
 Link an existing issue in the pull request when one tracks the work. Open an
 issue first for public API, hook, persistence, supported-platform, security, or
@@ -139,6 +141,8 @@ Documentation changes follow the behavior in the same pull request:
   change;
 - update `docs/TESTING.md` when a test layer, gate, artifact, prerequisite, or
   command changes;
+- update `docs/RELEASING.md` when release preparation, validation, publication,
+  verification, or recovery changes;
 - update code-level documentation when a public signature, exception, hook, or
   persistence rule changes.
 
