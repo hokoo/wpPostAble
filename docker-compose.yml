@@ -1,0 +1,96 @@
+name: "${COMPOSE_PROJECT_NAME:-wppostable}"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "${DOCKER_LOG_MAX_SIZE:-10m}"
+    max-file: "${DOCKER_LOG_MAX_FILE:-3}"
+
+services:
+  db:
+    image: "${MYSQL_IMAGE:-mysql:8.0.46}"
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      MYSQL_DATABASE: "${DB_NAME:?Set DB_NAME in .env.localdev}"
+      MYSQL_USER: "${DB_USER:?Set DB_USER in .env.localdev}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:?Set DB_PASSWORD in .env.localdev}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.localdev}"
+    healthcheck:
+      test: 'MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}" mysqladmin ping --host=127.0.0.1 --user=root --silent'
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    volumes:
+      - mysql-data:/var/lib/mysql
+    logging: *default-logging
+
+  php:
+    build:
+      context: ./docker/php
+      args:
+        PHP_BASE_IMAGE: "${PHP_BASE_IMAGE:-wodby/wordpress-php:8.4-4.80.9}"
+    init: true
+    restart: unless-stopped
+    working_dir: /srv/web
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ROOT: /srv/web
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: "${DB_NAME:?Set DB_NAME in .env.localdev}"
+      DB_USER: "${DB_USER:?Set DB_USER in .env.localdev}"
+      DB_PASSWORD: "${DB_PASSWORD:?Set DB_PASSWORD in .env.localdev}"
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: "${DB_NAME:?Set DB_NAME in .env.localdev}"
+      WORDPRESS_DB_USER: "${DB_USER:?Set DB_USER in .env.localdev}"
+      WORDPRESS_DB_PASSWORD: "${DB_PASSWORD:?Set DB_PASSWORD in .env.localdev}"
+      WP_DEBUG: "${WP_DEBUG:-1}"
+      PHP_FPM_USER: wodby
+      PHP_FPM_GROUP: wodby
+      PHP_FPM_CLEAR_ENV: "no"
+      PHP_EXTENSIONS_DISABLE: "${PHP_EXTENSIONS_DISABLE:-xdebug,xhprof,spx}"
+    healthcheck:
+      test: "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    volumes:
+      - ./local-dev:/srv/web
+      - ./:/workspace
+      - php-logs:/var/log/php
+    logging: *default-logging
+
+  nginx:
+    image: "${NGINX_IMAGE:-nginx:1.31.5-alpine}"
+    init: true
+    restart: unless-stopped
+    working_dir: /srv/web
+    depends_on:
+      php:
+        condition: service_healthy
+    environment:
+      NGINX_ENVSUBST_FILTER: ^WP_HOST$
+      WP_HOST: "${WP_HOST:-wppostable.local}"
+    healthcheck:
+      test: 'wget --quiet --spider http://127.0.0.1/wp-login.php || exit 1'
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    ports:
+      - "${WP_BIND_ADDRESS:-127.0.0.1}:${WP_HTTP_PORT:-8089}:80"
+    volumes:
+      - ./local-dev:/srv/web:ro
+      - ./:/workspace:ro
+      - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    logging: *default-logging
+
+volumes:
+  mysql-data:
+  php-logs:

@@ -1,0 +1,14 @@
+/.env
+/.env.*
+!/.env.localdev.example
+/.idea/
+/.phpunit.cache/
+/coverage/
+/local-dev/
+/vendor/
+
+*.log
+*.sql
+
+.DS_Store
+Thumbs.db
