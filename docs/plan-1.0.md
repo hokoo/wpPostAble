@@ -89,7 +89,7 @@ Tasks:
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
 | T1 | [#13 Document SemVer and the 1.0 public contract](https://github.com/hokoo/wpPostAble/issues/13) | `completed` | None |
-| T2 | [#14 Establish the historical changelog and release-note policy](https://github.com/hokoo/wpPostAble/issues/14) | `in_progress` | T1 |
+| T2 | [#14 Establish the historical changelog and release-note policy](https://github.com/hokoo/wpPostAble/issues/14) | `review` | T1 |
 | T3 | [#15 Document local development and every test layer](https://github.com/hokoo/wpPostAble/issues/15) | `completed` | None |
 | T4 | [#16 Add contribution and pull-request documentation gates](https://github.com/hokoo/wpPostAble/issues/16) | `waiting_dependency` | T1, T2, T3 |
 
@@ -303,6 +303,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 1 integration | Commit `86f1fda`; documentation links and PHP 7.4-compatible README example | Pass |
 | 2026-09-11 | Batch 1 PR | [PR #26](https://github.com/hokoo/wpPostAble/pull/26); [CI run 34527618018](https://github.com/hokoo/wpPostAble/actions/runs/34527618018) | Pass: 5/5 jobs |
 | 2026-09-11 | Batch 1 merge | Merge commit `e865dbc`; [post-merge CI run 34527776340](https://github.com/hokoo/wpPostAble/actions/runs/34527776340) | Pass: 5/5 jobs |
+| 2026-09-11 | T2 | Commit `58fe3da`; 12 local/remote tags and 10 GitHub Release records reconciled; all ref, release, and comparison links verified | Pass |
 
 ## Transition log
 
@@ -339,3 +340,9 @@ Each implementation task must, in the same PR:
 - T1/#13 and T3/#15 are closed and `completed`.
 - Readiness sweep: T1 completion unblocked T2/#14; T3 completion unblocked T5/#17. Both tasks satisfy their DoR and moved from `waiting_dependency` to `in_progress`.
 - Batch 2 ownership is isolated: T2 owns the historical changelog; T5 owns coverage enforcement, package-install smoke, CI, and affected testing documentation. Plan, cross-document integration, and evidence remain with the delivery owner.
+
+### 2026-09-11 — T2 implementation complete
+
+- `CHANGELOG.md` reconstructs all releases from `0.1` through `0.6.2`, records the post-`0.6.2` upgrade impact planned for `0.7.0`, and defines the future Unreleased-entry policy.
+- Verification reconciled all 12 local tags with their remote SHAs and all 10 GitHub Release records. `0.2.1` and `0.3` were confirmed as tag-only; the historical prerelease/latest mismatch is recorded as a dated snapshot.
+- T2/#14 moved from `in_progress` to `review`, pending Batch 2 CI and merge.
