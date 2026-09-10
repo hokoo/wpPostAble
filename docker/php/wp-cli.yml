@@ -1,0 +1,24 @@
+# WP-CLI 2.12 skips client option files by default. Loading them for commands
+# that invoke MariaDB client binaries applies Wodby's local TLS configuration.
+db check:
+  defaults: true
+db clean:
+  defaults: true
+db cli:
+  defaults: true
+db create:
+  defaults: true
+db drop:
+  defaults: true
+db export:
+  defaults: true
+db import:
+  defaults: true
+db optimize:
+  defaults: true
+db query:
+  defaults: true
+db repair:
+  defaults: true
+db reset:
+  defaults: true

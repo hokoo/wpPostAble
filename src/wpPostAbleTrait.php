@@ -12,7 +12,9 @@
 namespace iTRON\wpPostAble;
 
 use iTRON\wpPostAble\Exceptions\wppaCreatePostException;
+use iTRON\wpPostAble\Exceptions\wppaDeletePostException;
 use iTRON\wpPostAble\Exceptions\wppaLoadPostException;
+use iTRON\wpPostAble\Exceptions\wppaParamException;
 use iTRON\wpPostAble\Exceptions\wppaSavePostException;
 use WP_Error;
 use WP_Post;
@@ -32,6 +34,11 @@ trait wpPostAbleTrait{
 	 * @var array
 	 */
 	private $post_meta = [];
+
+	/**
+	 * @var array
+	 */
+	private $dirty_post_meta = [];
 
 	/**
 	 * Call this method in the beginning __construct() of your class.
@@ -91,24 +98,116 @@ trait wpPostAbleTrait{
 		do_action( __CLASS__ . $actionName, ...$data );
 	}
 
+	/**
+	 * @throws wppaParamException
+	 */
 	public function getParam( string $param ) {
-		$data = json_decode( $this->post->post_content_filtered );
-		return $data->$param ?? null;
+		$data = $this->decodeParamMap( $param, wppaParamException::OPERATION_READ );
+		return $data->{$param} ?? null;
 	}
 
+	/**
+	 * @throws wppaParamException
+	 */
 	public function setParam( string $param, $value ) {
-		$data = json_decode( $this->post->post_content_filtered, true ) ?? [];
-		$data[ $param ] = $value;
-		$this->post->post_content_filtered = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+		$data = $this->decodeParamMap( $param, wppaParamException::OPERATION_WRITE );
+		$data->{$param} = $value;
+
+		try {
+			$encoded = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+		} catch ( \Throwable $previous ) {
+			throw new wppaParamException(
+				$this,
+				$param,
+				wppaParamException::OPERATION_WRITE,
+				wppaParamException::REASON_ENCODE_FAILED,
+				JSON_ERROR_NONE,
+				"Cannot write parameter \"$param\": JSON encoding failed.",
+				$previous
+			);
+		}
+
+		$json_error_code = json_last_error();
+		if ( false === $encoded || JSON_ERROR_NONE !== $json_error_code ) {
+			throw new wppaParamException(
+				$this,
+				$param,
+				wppaParamException::OPERATION_WRITE,
+				wppaParamException::REASON_ENCODE_FAILED,
+				$json_error_code,
+				"Cannot write parameter \"$param\": JSON encoding failed (" . json_last_error_msg() . ').'
+			);
+		}
+
+		$this->post->post_content_filtered = $encoded;
 	}
 
-	public function deletePost(){
-		$this->doAction( '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post );
+	/**
+	 * @throws wppaParamException
+	 */
+	private function decodeParamMap( string $param, string $operation ): \stdClass {
+		$content = $this->post->post_content_filtered;
+		if ( '' === $content ) {
+			return new \stdClass();
+		}
 
-		wp_delete_post( $this->post->ID );
+		$data = json_decode( $content );
+		$json_error_code = json_last_error();
+		if ( JSON_ERROR_NONE !== $json_error_code ) {
+			throw new wppaParamException(
+				$this,
+				$param,
+				$operation,
+				wppaParamException::REASON_INVALID_JSON,
+				$json_error_code,
+				"Cannot $operation parameter \"$param\": invalid parameter JSON (" . json_last_error_msg() . ').'
+			);
+		}
+
+		if ( $data instanceof \stdClass ) {
+			return $data;
+		}
+
+		if ( is_array( $data ) ) {
+			$map = new \stdClass();
+			foreach ( $data as $key => $value ) {
+				$map->{(string) $key} = $value;
+			}
+			return $map;
+		}
+
+		throw new wppaParamException(
+			$this,
+			$param,
+			$operation,
+			wppaParamException::REASON_INVALID_ROOT,
+			JSON_ERROR_NONE,
+			"Cannot $operation parameter \"$param\": parameter JSON root must be an object or array."
+		);
+	}
+
+	/**
+	 * @throws wppaDeletePostException
+	 */
+	public function deletePost(){
+		$post = $this->post;
+		$post_id = $post->ID;
+
+		$this->doAction( '\wpPostAbleTrait\deletePost\beforeDeletePost', $post_id, $post );
+
+		if ( ! wp_delete_post( $post_id ) instanceof WP_Post ) {
+			$error = new WP_Error(
+				'delete_post_failed',
+				"Unable to delete post [ $post_id ].",
+				[ 'post_id' => $post_id ]
+			);
+			/** @var wpPostAble $this */
+			throw new wppaDeletePostException( $this, $post, $error, $error->get_error_message() );
+		}
+
 		$this->post = null;
 
-		$this->doAction( '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post );
+		$this->doAction( '\wpPostAbleTrait\deletePost\afterDeletePost', $post_id, $post );
 	}
 
 	public function getPost(): WP_Post{
@@ -124,13 +223,16 @@ trait wpPostAbleTrait{
 	 */
 	public function savePost(): self {
 		$postData = get_object_vars( $this->post );
-		$postData[ 'meta_input' ] = $this->post_meta;
+		if ( ! empty( $this->dirty_post_meta ) ) {
+			$postData[ 'meta_input' ] = $this->dirty_post_meta;
+		}
 		$result = wp_update_post( $postData, true );
 		if ( empty( $result ) || is_wp_error( $result ) ){
 			$error = empty( $result ) ? new WP_Error() : $result;
 			/** @var wpPostAble $this */
 			throw new wppaSavePostException( $this, $error, $error->get_error_message() );
 		}
+		$this->dirty_post_meta = [];
 		return $this;
 	}
 
@@ -219,6 +321,7 @@ trait wpPostAbleTrait{
 	 */
 	public function setMetaField( string $meta_key, $meta_value ): self {
 		$this->post_meta[ $meta_key ] = $meta_value;
+		$this->dirty_post_meta[ $meta_key ] = $meta_value;
 		return $this;
 	}
 

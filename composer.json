@@ -11,11 +11,37 @@
     }
   ],
   "require": {
-    "ext-json": "*"
+    "ext-json": "*",
+    "php": ">=7.4"
+  },
+  "require-dev": {
+    "brain/monkey": "^2.6",
+    "phpunit/phpunit": "^9.6"
   },
   "autoload": {
     "psr-4": {
       "iTRON\\wpPostAble\\": "src"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "iTRON\\wpPostAble\\Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "platform": {
+      "php": "7.4.33"
+    },
+    "sort-packages": true
+  },
+  "scripts": {
+    "check": [
+      "@composer validate --strict",
+      "@lint",
+      "@test:test-unit"
+    ],
+    "lint": "find src tests -name '*.php' -print0 | xargs -0 -n1 php -l",
+    "test:coverage": "bash scripts/test-coverage.sh",
+    "test:test-unit": "phpunit --testsuite unit"
   }
 }
