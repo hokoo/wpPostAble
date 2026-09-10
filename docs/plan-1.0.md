@@ -332,6 +332,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T10 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T231637Z-35090-18841` and `latest-20260910T231756Z-36534-31869` | Pass: 51 tests/309 assertions on PHP 7.4/8.4; 177/177 lines and 41/41 methods; package install and both WordPress edges passed with zero remaining fixtures |
 | 2026-09-11 | T11 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; `make smoke`; integration artifacts `minimum-20260910T232558Z-42780-14671` and `latest-20260910T232631Z-44008-10331` | Pass: 59 tests/354 assertions on PHP 7.4/8.4; 180/180 lines and 43/43 methods; localdev, package install, and both WordPress edges passed with zero remaining fixtures |
 | 2026-09-11 | Batch 4 pre-PR QA | Root integration artifacts `minimum-20260910T233033Z-47568-5574` and `latest-20260910T233211Z-49057-3120`; independent E3 contract/regression review of `0b05e33..dde6dc6` | Pass: all T9–T11 AC/DoD, 59 tests/354 assertions, 100% line/method coverage, package boundary, PHP 7.4/8.4 and WordPress 6.0/7.1; no findings, missing evidence, leaks, or scope expansion |
+| 2026-09-11 | Batch 4 initial PR validation | [PR #33](https://github.com/hokoo/wpPostAble/pull/33); [CI run 34543169846](https://github.com/hokoo/wpPostAble/actions/runs/34543169846) | Pass: 5/5 required jobs; protected PR remains open for final evidence synchronization |
 
 ## Transition log
 
@@ -512,3 +513,9 @@ Each implementation task must, in the same PR:
 - The delivery-owner integration run on the combined T9–T11 HEAD passed all 16 lifecycle groups on WordPress 6.0/PHP 7.4 and WordPress 7.1/PHP 8.4. Both runs removed every fixture and project-scoped Docker resource; diagnostic logs were empty.
 - Independent E3 contract/regression QA reviewed `0b05e33..dde6dc6`, all three issue contracts, code, behavioral tests, documentation, package contents, and compatibility boundaries. It returned PASS with no findings, missing AC/DoD, human risk acceptance, secret/artifact leakage, unrelated changes, or T12 scope expansion.
 - Batch 4 is ready for one protected pull request. T9–T11 remain in `review` and their issues remain open until required CI passes and the PR merges.
+
+### 2026-09-11 — Batch 4 protected PR validation passed
+
+- PR #33 links and will close #2, #3, and #4 only when merged. Its body records behavior, migration, SemVer, compatibility/security review, every required verification row, documentation/changelog impact, and independent QA.
+- Initial run `34543169846` passed all five required jobs: PHP 7.4 quality, PHP 8.4 quality and coverage/package installation, and WordPress minimum/latest integration.
+- This evidence synchronization is the only change after that run. The PR remains open until the new head passes the same strict checks.
