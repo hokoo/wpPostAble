@@ -91,7 +91,7 @@ Tasks:
 | T1 | [#13 Document SemVer and the 1.0 public contract](https://github.com/hokoo/wpPostAble/issues/13) | `completed` | None |
 | T2 | [#14 Establish the historical changelog and release-note policy](https://github.com/hokoo/wpPostAble/issues/14) | `completed` | T1 |
 | T3 | [#15 Document local development and every test layer](https://github.com/hokoo/wpPostAble/issues/15) | `completed` | None |
-| T4 | [#16 Add contribution and pull-request documentation gates](https://github.com/hokoo/wpPostAble/issues/16) | `in_progress` | T1, T2, T3 |
+| T4 | [#16 Add contribution and pull-request documentation gates](https://github.com/hokoo/wpPostAble/issues/16) | `review` | T1, T2, T3 |
 
 ## E2. Release governance and 0.7.0
 
@@ -309,6 +309,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 2 PR | [PR #27](https://github.com/hokoo/wpPostAble/pull/27); [CI run 34530586203](https://github.com/hokoo/wpPostAble/actions/runs/34530586203) | Pass: 5/5 jobs |
 | 2026-09-11 | Batch 2 merge | Merge commit `26426f4`; [post-merge CI run 34530717523](https://github.com/hokoo/wpPostAble/actions/runs/34530717523) | Pass: 5/5 jobs |
 | 2026-09-11 | T7 | GitHub protection/repository API read-back; old branch head `4390e21`; `git merge-base --is-ancestor`; unique commit count `0` | Pass |
+| 2026-09-11 | T4 | Commit `ca15664`; internal-link and Make-target audit; template structure; `make help`; `git diff --check` | Pass |
 
 ## Transition log
 
@@ -374,3 +375,10 @@ Each implementation task must, in the same PR:
 - Automatic deletion of merged branches is enabled and was confirmed by repository API read-back.
 - The remote branch `codex/test-foundation-localdev-ci` was deleted only after PR #12, its exact head `4390e21`, ancestry from `master`, and zero unique commits were verified. Its history remains reachable from `master`.
 - Protection, repository settings, and branch absence were all read back successfully. T7/#19 moved from `in_progress` to `review`, pending recorded-evidence merge and independent E2 QA.
+
+### 2026-09-11 — T4 implementation complete
+
+- `CONTRIBUTING.md` defines the lightweight single-maintainer branch/commit flow, SemVer assessment, compatibility/security review, test evidence, documentation impact, and narrow no-changelog cases.
+- The pull-request template requires linked intent, before/after behavior, one SemVer choice, compatibility risks, all verification rows, documentation/changelog decisions, and final secret/artifact checks.
+- README and the Unreleased changelog now expose the contribution workflow. Every internal link and referenced Make target was verified against the repository.
+- T4/#16 moved from `in_progress` to `review`, pending Batch 3 CI, merge, and independent E1 documentation QA.
