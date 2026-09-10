@@ -12,6 +12,7 @@
 namespace iTRON\wpPostAble;
 
 use iTRON\wpPostAble\Exceptions\wppaCreatePostException;
+use iTRON\wpPostAble\Exceptions\wppaDeletePostException;
 use iTRON\wpPostAble\Exceptions\wppaLoadPostException;
 use iTRON\wpPostAble\Exceptions\wppaSavePostException;
 use WP_Error;
@@ -102,13 +103,28 @@ trait wpPostAbleTrait{
 		$this->post->post_content_filtered = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
 	}
 
+	/**
+	 * @throws wppaDeletePostException
+	 */
 	public function deletePost(){
-		$this->doAction( '\wpPostAbleTrait\deletePost\beforeDeletePost', $this->post->ID, $this->post );
+		$post = $this->post;
+		$post_id = $post->ID;
 
-		wp_delete_post( $this->post->ID );
+		$this->doAction( '\wpPostAbleTrait\deletePost\beforeDeletePost', $post_id, $post );
+
+		if ( ! wp_delete_post( $post_id ) instanceof WP_Post ) {
+			$error = new WP_Error(
+				'delete_post_failed',
+				"Unable to delete post [ $post_id ].",
+				[ 'post_id' => $post_id ]
+			);
+			/** @var wpPostAble $this */
+			throw new wppaDeletePostException( $this, $post, $error, $error->get_error_message() );
+		}
+
 		$this->post = null;
 
-		$this->doAction( '\wpPostAbleTrait\deletePost\afterDeletePost', $this->post->ID, $this->post );
+		$this->doAction( '\wpPostAbleTrait\deletePost\afterDeletePost', $post_id, $post );
 	}
 
 	public function getPost(): WP_Post{
