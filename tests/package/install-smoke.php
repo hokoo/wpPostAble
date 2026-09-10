@@ -27,6 +27,7 @@ packageSmokeAssert(!is_link($installedDirectory), 'path package was symlinked in
 
 $allowedPackageEntries = array(
     'CHANGELOG.md',
+    'CONTRIBUTING.md',
     'LICENSE',
     'README.md',
     'VERSIONING.md',

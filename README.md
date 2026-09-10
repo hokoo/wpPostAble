@@ -9,6 +9,8 @@ Once you create the instance, wpPostAble creates the WP_Post object and stores i
 - [Changelog](CHANGELOG.md)
 - [Local WordPress development](docs/LOCAL-DEVELOPMENT.md)
 - [Testing and coverage](docs/TESTING.md)
+- [Release runbook](docs/RELEASING.md)
+- [Contributing](CONTRIBUTING.md)
 - [1.0 delivery plan](docs/plan-1.0.md)
 
 You can manage your instance with such methods as
