@@ -135,7 +135,7 @@ Tasks:
 |---|---|---|---|
 | T5 | [#17 Enforce coverage and package-install release gates](https://github.com/hokoo/wpPostAble/issues/17) | `completed` | T3 |
 | T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `in_progress` | T1, T2, T5 |
-| T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `in_progress` | T5 |
+| T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `review` | T5 |
 | T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `waiting_dependency` | T1–T7, publication approval |
 
 ## E3. Minimal 1.0 public API
@@ -308,6 +308,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T5 WordPress matrix | Artifacts `minimum-20260910T205636Z-53336-22973` and `latest-20260910T205716Z-54494-12965` | Pass: WP 6.0/PHP 7.4.33 and WP 7.1/PHP 8.4.25; zero fixtures |
 | 2026-09-11 | Batch 2 PR | [PR #27](https://github.com/hokoo/wpPostAble/pull/27); [CI run 34530586203](https://github.com/hokoo/wpPostAble/actions/runs/34530586203) | Pass: 5/5 jobs |
 | 2026-09-11 | Batch 2 merge | Merge commit `26426f4`; [post-merge CI run 34530717523](https://github.com/hokoo/wpPostAble/actions/runs/34530717523) | Pass: 5/5 jobs |
+| 2026-09-11 | T7 | GitHub protection/repository API read-back; old branch head `4390e21`; `git merge-base --is-ancestor`; unique commit count `0` | Pass |
 
 ## Transition log
 
@@ -365,3 +366,11 @@ Each implementation task must, in the same PR:
 - T2/#14 and T5/#17 are closed and `completed`.
 - Readiness sweep: merged T1–T3 and T5 satisfy every dependency and DoR for T4/#16, T6/#18, and T7/#19. All three moved from `waiting_dependency` to `in_progress`.
 - Batch 3 isolates contribution docs, release-workflow implementation, and repository-settings mutations. The workflow receives an independent security review, and repository protection is accepted only after API read-back.
+
+### 2026-09-11 — T7 repository governance applied
+
+- Before mutation, `master` had no branch protection and `delete_branch_on_merge` was false. The exact five successful GitHub Actions check names and their GitHub Actions App ID were read from merge commit `26426f4`.
+- `master` now requires pull requests and all five checks in strict/up-to-date mode, with zero required approvals for the single-maintainer flow. The rule applies to administrators; force pushes and branch deletion are disabled.
+- Automatic deletion of merged branches is enabled and was confirmed by repository API read-back.
+- The remote branch `codex/test-foundation-localdev-ci` was deleted only after PR #12, its exact head `4390e21`, ancestry from `master`, and zero unique commits were verified. Its history remains reachable from `master`.
+- Protection, repository settings, and branch absence were all read back successfully. T7/#19 moved from `in_progress` to `review`, pending recorded-evidence merge and independent E2 QA.
