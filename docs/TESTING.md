@@ -224,8 +224,8 @@ Each profile downloads a clean English (`en_US`) WordPress installation,
 installs it against a temporary MariaDB 10.11 database, links the local fixture
 as an mu-plugin, verifies the actual WordPress and PHP versions, and runs
 `tests/integration/wp-lifecycle.php` through WP-CLI. The lifecycle covers
-create/save/reload, status transitions, metadata, parameter serialization, and
-deletion behavior in real WordPress.
+create/save/reload, title, Core-normalized slug persistence, status transitions,
+metadata, parameter serialization, and deletion behavior in real WordPress.
 
 The following environment variables can override integration inputs for a
 targeted investigation:

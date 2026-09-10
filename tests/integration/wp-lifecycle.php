@@ -86,6 +86,13 @@ try {
 	wppa_integration_assert( $post_id > 0, 'model creation did not return a persisted post ID' );
 	wppa_integration_assert( WpPostAbleLocalItem::POST_TYPE === $item->getPostType(), 'model post type changed' );
 	wppa_integration_assert( 'draft' === $item->getStatus(), 'new model did not start as a draft' );
+	wppa_integration_assert( '' === $item->getSlug(), 'new draft did not start with an empty slug' );
+
+	$requested_slug = 'Custom Slug For Integration';
+	$expected_slug = sanitize_title( $requested_slug );
+	wppa_integration_assert( $requested_slug !== $expected_slug, 'slug fixture does not exercise Core normalization' );
+	wppa_integration_assert( $item === $item->setSlug( $requested_slug ), 'slug setter was not chainable' );
+	wppa_integration_assert( $requested_slug === $item->getSlug(), 'slug setter changed the raw in-memory value' );
 
 	$unicode_param = 'Привет, საქართველო 👋';
 	$nested_param  = array(
@@ -112,12 +119,15 @@ try {
 	$item->setParam( 'nested', $nested_param );
 	$item->setParam( '0', 'numeric-key value' );
 	$item->savePost();
+	wppa_integration_assert( $requested_slug === $item->getSlug(), 'save unexpectedly rewrote the in-memory slug' );
+	wppa_integration_assert( $expected_slug === get_post_field( 'post_name', $post_id ), 'Core did not persist its normalized slug' );
 
 	wppa_integration_assert( false !== add_post_meta( $post_id, 'wppa_multi', 'first value' ), 'first multi-value meta row was not added' );
 	wppa_integration_assert( false !== add_post_meta( $post_id, 'wppa_multi', 'second value' ), 'second multi-value meta row was not added' );
 
 	$loaded = new WpPostAbleLocalItem( $post_id );
 	wppa_integration_assert( 'wpPostAble integration lifecycle' === $loaded->getTitle(), 'title did not survive save/reload' );
+	wppa_integration_assert( $expected_slug === $loaded->getSlug(), 'Core-normalized slug did not survive save/reload' );
 	wppa_integration_assert( 'draft' === $loaded->getStatus(), 'draft status did not survive save/reload' );
 	wppa_integration_assert( '' === $loaded->getParam( 'empty' ), 'empty parameter did not survive save/reload' );
 	wppa_integration_assert( $unicode_param === $loaded->getParam( 'unicode' ), 'Unicode parameter did not survive save/reload' );
@@ -196,9 +206,11 @@ try {
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'initial reload' );
 
 	$loaded->setTitle( 'wpPostAble title-only save' )->savePost();
+	wppa_integration_assert( $expected_slug === $loaded->getSlug(), 'title-only save changed the slug' );
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'title-only save' );
 
 	$loaded->setMetaField( 'wppa_unrelated', 'unrelated value' )->savePost();
+	wppa_integration_assert( $expected_slug === $loaded->getSlug(), 'metadata save changed the slug' );
 	wppa_integration_assert( 'unrelated value' === get_post_meta( $post_id, 'wppa_unrelated', true ), 'explicit single-meta save failed' );
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'unrelated single-meta save' );
 
@@ -248,6 +260,7 @@ try {
 	$published->draft();
 	$draft = new WpPostAbleLocalItem( $post_id );
 	wppa_integration_assert( 'draft' === $draft->getStatus(), 'draft() did not persist draft status' );
+	wppa_integration_assert( $expected_slug === $draft->getSlug(), 'slug changed across publish and draft saves' );
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'draft save' );
 	wppa_integration_assert( '' === $draft->getParam( 'empty' ), 'empty parameter changed across later saves' );
 	wppa_integration_assert( $unicode_param === $draft->getParam( 'unicode' ), 'Unicode parameter changed across later saves' );
@@ -327,6 +340,7 @@ try {
 			'fixture_mu_plugin',
 			'create_save_reload',
 			'title_and_status',
+			'slug_core_normalization_and_reload',
 			'empty_unicode_nested_numeric_params',
 			'param_exception_contracts',
 			'wp_post_object_identity_meta_and_hooks',

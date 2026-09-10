@@ -30,6 +30,7 @@ if ( ! class_exists( 'WP_Post' ) ) {
 	class WP_Post {
 		public $ID = 0;
 		public $post_title = '';
+		public $post_name = '';
 		public $post_status = 'draft';
 		public $post_content = '';
 		public $post_content_filtered = '';

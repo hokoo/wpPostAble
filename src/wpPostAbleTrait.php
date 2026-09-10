@@ -316,6 +316,15 @@ trait wpPostAbleTrait{
 		return $this;
 	}
 
+	public function getSlug(): string{
+		return $this->post->post_name;
+	}
+
+	public function setSlug( string $slug ): self {
+		$this->post->post_name = $slug;
+		return $this;
+	}
+
 	public function getStatus(): string{
 		return $this->post->post_status;
 	}

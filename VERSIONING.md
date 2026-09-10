@@ -114,6 +114,8 @@ it.
 | `getPostType()` | yes | `string` | Returns the post type supplied during initialization. |
 | `getTitle()` | yes | `string` | Returns `WP_Post::post_title`. |
 | `setTitle(string $title)` | yes | `$this` (`self`) | Changes the in-memory title and is chainable; persistence requires a save. |
+| `getSlug(): string` | yes | `string` | Returns the current in-memory `WP_Post::post_name`. |
+| `setSlug(string $slug): self` | yes | `$this` (`self`) | Stores the supplied slug in memory and is chainable; Core normalization and persistence require a save and reload. |
 | `getStatus()` | yes | `string` | Returns `WP_Post::post_status`. |
 | `setStatus(string $status)` | yes | `$this` (`self`) | Changes the in-memory status and is chainable; persistence requires a save. |
 | `setMetaField(string $meta_key, $meta_value)` | yes | `$this` (`self`) | Changes the in-memory single-value view, marks only that key dirty, and is chainable. |
@@ -129,6 +131,11 @@ interface currently omits a return type that the trait declares. Changing a
 parameter type, narrowing an accepted input, changing a return type or
 chainability, or adding a new failure for an input that was previously supported
 is a compatibility change.
+
+Classes using `wpPostAbleTrait` receive the slug implementations automatically.
+A class that implements `wpPostAble` manually, or overrides either trait method,
+must add compatible `getSlug(): string` and `setSlug(string $slug): self`
+signatures before adopting the 1.0 interface.
 
 The trait also exposes the protected property `$post` to the adopting class and
 its subclasses. It contains the active `WP_Post` and becomes `null` after a
@@ -237,6 +244,9 @@ filter is `Vendor\Item\wpPostAbleTrait\init\defaultTitle`.
   otherwise identical to loading by ID.
 - Title, status, parameter, and arbitrary mutations made to the returned
   `WP_Post` are in memory until `savePost()`, `publish()`, or `draft()` succeeds.
+- `setSlug()` assigns the supplied value directly to `WP_Post::post_name` without
+  sanitizing or saving it. WordPress Core may normalize or uniquify that value
+  during a save; reload the model to observe the final persisted slug.
 - Metadata is loaded as a single-value map. For a key with multiple database
   rows, the first row is exposed. Values are passed through WordPress
   `maybe_unserialize()` once.
@@ -319,7 +329,6 @@ development testing.
 The following planned work is intentionally visible rather than being silently
 treated as already stable:
 
-- symmetric slug accessors ([issue #3](https://github.com/hokoo/wpPostAble/issues/3));
 - symmetric menu-order accessors ([issue #4](https://github.com/hokoo/wpPostAble/issues/4));
 - adding the existing `getParam()` and `setParam()` operations to the interface;
 - resolving the visibility/status of `wpPostAble()`, `loadPost()`, protected

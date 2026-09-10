@@ -17,6 +17,8 @@ You can manage your instance with such methods as
 
 - `$instance->getTitle();`
 - `$instance->setTitle();`
+- `$instance->getSlug();`
+- `$instance->setSlug();`
 - `$instance->getMetaField();`
 - `$instance->setMetaField();`
 - `$instance->getStatus();`
@@ -113,9 +115,25 @@ Let's try change the title
 ```php
 $item->setTitle('The best item');
 ```
-Now you have set title, and let's try to save it in database
+Set a slug through the same in-memory, chainable API:
+
+```php
+$item->setSlug('the-best-item');
+```
+
+The title and slug are still only in memory. Persist them explicitly:
+
 ```php
 $item->savePost();
+```
+
+`setSlug()` keeps the supplied value on the current `WP_Post` and does not save
+automatically. During `savePost()`, WordPress Core may normalize the slug or make
+it unique. Reload the model to observe the persisted Core value:
+
+```php
+$item = new Item( $item->getPost()->ID );
+$slug = $item->getSlug();
 ```
 
 Maybe it's time to publish?
@@ -125,7 +143,7 @@ $item->publish();
 
 You can do it by single line
 ```php
-$item->setTitle('The best item')->publish();
+$item->setTitle('The best item')->setSlug('the-best-item')->publish();
 ```
 
 More options you can find in the description above and in the source code.

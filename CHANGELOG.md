@@ -12,11 +12,21 @@ policy.
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- `wpPostAble` now requires `getSlug(): string` and chainable
+  `setSlug(string $slug): self`. Classes using `wpPostAbleTrait` receive the
+  implementation automatically; manual implementations and overrides must add
+  compatible methods.
+
 ### Added
 
 - Added initialization from an existing `WP_Post` object. The model retains the
   supplied object identity and applies the normal post-type, metadata, and load
   lifecycle without inserting or looking up the post again.
+- Added symmetric accessors for `WP_Post::post_name`. Slug mutation remains
+  in-memory until the existing save lifecycle delegates normalization,
+  uniqueness, and persistence to WordPress Core.
 
 ### Changed
 

@@ -14,6 +14,8 @@ interface wpPostAble{
 	public function getPostType();
 	public function getTitle();
 	public function setTitle( string $title );
+	public function getSlug(): string;
+	public function setSlug( string $slug ): self;
 	public function getStatus();
 	public function setStatus( string $status );
 	public function setMetaField( string $meta_key, $meta_value );
