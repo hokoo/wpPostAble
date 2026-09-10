@@ -41,6 +41,7 @@
       "@test:test-unit"
     ],
     "lint": "find src tests -name '*.php' -print0 | xargs -0 -n1 php -l",
+    "test:coverage": "bash scripts/test-coverage.sh",
     "test:test-unit": "phpunit --testsuite unit"
   }
 }
