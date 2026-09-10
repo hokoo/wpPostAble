@@ -23,7 +23,7 @@ final class PostMutationTest extends WordPressTestCase {
 		self::assertSame( [ 'fixture' => 'value', 'rating' => 5 ], $postable->getMetaFields() );
 	}
 
-	public function testSerializedMetaIsUnserializedExactlyOnceBeforeSave(): void {
+	public function testSerializedMetaIsUnserializedForReadsWithoutImplicitlyResavingIt(): void {
 		$post = $this->post();
 		$this->stubLoadedPost(
 			$post,
@@ -47,19 +47,77 @@ final class PostMutationTest extends WordPressTestCase {
 
 		self::assertSame( $postable, $result );
 		self::assertSame( [ 'layout' => 'grid', 'columns' => 3 ], $postable->getMetaField( 'settings' ) );
-		self::assertSame( [ 'layout' => 'grid', 'columns' => 3 ], $saved[0]['meta_input']['settings'] );
+		self::assertArrayNotHasKey( 'meta_input', $saved[0] );
 		self::assertSame( 'Saved title', $saved[0]['post_title'] );
 		self::assertSame( 'private', $saved[0]['post_status'] );
 		self::assertEquals( (object) [ 'theme' => 'тёмная' ], json_decode( $saved[0]['post_content_filtered'] )->display );
 		self::assertTrue( $saved[1] );
 	}
 
+	public function testSaveIncludesOnlyExplicitlySetMetaAndClearsItAfterSuccess(): void {
+		$this->stubLoadedPost(
+			$this->post(),
+			[
+				'untouched' => [ 'first', 'second' ],
+				'same'      => [ 'same value' ],
+			]
+		);
+		$saved = [];
+		Functions\when( 'wp_update_post' )->alias(
+			static function ( array $postData, bool $wpError ) use ( & $saved ): int {
+				$saved[] = [ $postData, $wpError ];
+				return $postData['ID'];
+			}
+		);
+
+		$postable = new TestPostable( 'book', 23 );
+		self::assertSame( 'first', $postable->getMetaField( 'untouched' ) );
+
+		$postable
+			->setMetaField( 'same', 'same value' )
+			->setMetaField( 'nullable', null )
+			->setMetaField( 'empty', '' );
+
+		self::assertSame( $postable, $postable->savePost() );
+		self::assertSame( $postable, $postable->savePost() );
+
+		self::assertSame(
+			[
+				'same'     => 'same value',
+				'nullable' => null,
+				'empty'    => '',
+			],
+			$saved[0][0]['meta_input']
+		);
+		self::assertArrayNotHasKey( 'untouched', $saved[0][0]['meta_input'] );
+		self::assertTrue( $saved[0][1] );
+		self::assertArrayNotHasKey( 'meta_input', $saved[1][0] );
+		self::assertTrue( $saved[1][1] );
+		self::assertSame(
+			[
+				'untouched' => 'first',
+				'same'      => 'same value',
+				'nullable'  => null,
+				'empty'     => '',
+			],
+			$postable->getMetaFields()
+		);
+	}
+
 	/**
 	 * @dataProvider failedSaveProvider
 	 */
-	public function testSaveFailurePreservesPostAndWordPressError( $result, string $message ): void {
+	public function testSaveFailurePreservesDirtyMetaForRetry( $result, string $message ): void {
 		$postable = $this->loadPostable();
-		Functions\when( 'wp_update_post' )->justReturn( $result );
+		$saved = [];
+		$results = [ $result, 23, 23 ];
+		Functions\when( 'wp_update_post' )->alias(
+			static function ( array $postData, bool $wpError ) use ( & $saved, & $results ) {
+				$saved[] = [ $postData, $wpError ];
+				return array_shift( $results );
+			}
+		);
+		$postable->setMetaField( 'retry', [ 'attempt' => 1 ] );
 
 		try {
 			$postable->savePost();
@@ -70,6 +128,18 @@ final class PostMutationTest extends WordPressTestCase {
 			self::assertInstanceOf( WP_Error::class, $exception->getError() );
 			self::assertSame( $message, $exception->getMessage() );
 		}
+
+		self::assertSame( $postable, $postable->savePost() );
+		self::assertSame( $postable, $postable->savePost() );
+
+		self::assertSame( [ 'retry' => [ 'attempt' => 1 ] ], $saved[0][0]['meta_input'] );
+		self::assertSame( [ 'retry' => [ 'attempt' => 1 ] ], $saved[1][0]['meta_input'] );
+		self::assertArrayNotHasKey( 'fixture', $saved[0][0]['meta_input'] );
+		self::assertArrayNotHasKey( 'fixture', $saved[1][0]['meta_input'] );
+		self::assertArrayNotHasKey( 'meta_input', $saved[2][0] );
+		self::assertTrue( $saved[0][1] );
+		self::assertTrue( $saved[1][1] );
+		self::assertTrue( $saved[2][1] );
 	}
 
 	public function failedSaveProvider(): array {

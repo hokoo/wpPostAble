@@ -35,6 +35,11 @@ trait wpPostAbleTrait{
 	private $post_meta = [];
 
 	/**
+	 * @var array
+	 */
+	private $dirty_post_meta = [];
+
+	/**
 	 * Call this method in the beginning __construct() of your class.
 	 *
 	 * @param string $post_type
@@ -140,13 +145,16 @@ trait wpPostAbleTrait{
 	 */
 	public function savePost(): self {
 		$postData = get_object_vars( $this->post );
-		$postData[ 'meta_input' ] = $this->post_meta;
+		if ( ! empty( $this->dirty_post_meta ) ) {
+			$postData[ 'meta_input' ] = $this->dirty_post_meta;
+		}
 		$result = wp_update_post( $postData, true );
 		if ( empty( $result ) || is_wp_error( $result ) ){
 			$error = empty( $result ) ? new WP_Error() : $result;
 			/** @var wpPostAble $this */
 			throw new wppaSavePostException( $this, $error, $error->get_error_message() );
 		}
+		$this->dirty_post_meta = [];
 		return $this;
 	}
 
@@ -235,6 +243,7 @@ trait wpPostAbleTrait{
 	 */
 	public function setMetaField( string $meta_key, $meta_value ): self {
 		$this->post_meta[ $meta_key ] = $meta_value;
+		$this->dirty_post_meta[ $meta_key ] = $meta_value;
 		return $this;
 	}
 
