@@ -331,6 +331,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T9 implementation | `make check`; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T230625Z-28416-22771` and `latest-20260910T230711Z-29747-24204` | Pass: 45 tests/270 assertions; 174/174 lines and 39/39 methods; package install and WP 6.0/PHP 7.4 plus WP 7.1/PHP 8.4 passed with zero remaining fixtures |
 | 2026-09-11 | T10 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T231637Z-35090-18841` and `latest-20260910T231756Z-36534-31869` | Pass: 51 tests/309 assertions on PHP 7.4/8.4; 177/177 lines and 41/41 methods; package install and both WordPress edges passed with zero remaining fixtures |
 | 2026-09-11 | T11 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; `make smoke`; integration artifacts `minimum-20260910T232558Z-42780-14671` and `latest-20260910T232631Z-44008-10331` | Pass: 59 tests/354 assertions on PHP 7.4/8.4; 180/180 lines and 43/43 methods; localdev, package install, and both WordPress edges passed with zero remaining fixtures |
+| 2026-09-11 | Batch 4 pre-PR QA | Root integration artifacts `minimum-20260910T233033Z-47568-5574` and `latest-20260910T233211Z-49057-3120`; independent E3 contract/regression review of `0b05e33..dde6dc6` | Pass: all T9–T11 AC/DoD, 59 tests/354 assertions, 100% line/method coverage, package boundary, PHP 7.4/8.4 and WordPress 6.0/7.1; no findings, missing evidence, leaks, or scope expansion |
 
 ## Transition log
 
@@ -505,3 +506,9 @@ Each implementation task must, in the same PR:
 - Both real-WordPress profiles proved positive, zero, and negative persistence. A forced Core `WP_Error` left the database at zero while retaining `-7` in memory; retry then persisted `-7` without changing title, status, content, parameters, metadata, or slug.
 - README, versioning/migration policy, changelog, and testing documentation describe the contract and manual-interface migration. Root repeated unit, coverage, package-install, localdev smoke, and diff checks.
 - T11/#4 moved to `review` pending integrated Batch 4 QA, protected CI, and merge.
+
+### 2026-09-11 — Batch 4 pre-PR QA passed
+
+- The delivery-owner integration run on the combined T9–T11 HEAD passed all 16 lifecycle groups on WordPress 6.0/PHP 7.4 and WordPress 7.1/PHP 8.4. Both runs removed every fixture and project-scoped Docker resource; diagnostic logs were empty.
+- Independent E3 contract/regression QA reviewed `0b05e33..dde6dc6`, all three issue contracts, code, behavioral tests, documentation, package contents, and compatibility boundaries. It returned PASS with no findings, missing AC/DoD, human risk acceptance, secret/artifact leakage, unrelated changes, or T12 scope expansion.
+- Batch 4 is ready for one protected pull request. T9–T11 remain in `review` and their issues remain open until required CI passes and the PR merges.
