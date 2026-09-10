@@ -34,6 +34,9 @@ policy.
 - Added PHPUnit/Brain Monkey unit tests, isolated WordPress 6.0/PHP 7.4 and
   latest WordPress/PHP 8.4 integration profiles, Clover unit coverage, and
   least-privilege GitHub Actions CI.
+- Added enforceable 100% source line and method coverage gates plus a
+  production Composer artifact-install smoke check, with machine-readable
+  evidence for both.
 - Added formal versioning, compatibility, local-development, and testing
   policies for the path to 1.0.
 
@@ -47,6 +50,9 @@ policy.
 - JSON parameter reads and writes now have explicit root-shape and encoding
   validation, preserve failed input atomically, and support empty, Unicode,
   nested, and numeric-key values consistently.
+- Restricted Composer release archives to runtime source, package metadata,
+  licensing, changelog, and public documentation; environment files, local
+  WordPress state, dependencies, tests, and developer tooling are excluded.
 
 ### Fixed
 

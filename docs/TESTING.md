@@ -1,12 +1,14 @@
 # Testing
 
-The repository has three complementary test layers:
+The repository has four complementary validation layers:
 
 - unit tests use PHPUnit and Brain Monkey without booting WordPress;
 - the local smoke command exercises the library against the persistent
   development WordPress database;
 - integration profiles create isolated temporary WordPress installations for
-  the supported minimum and current environments.
+  the supported minimum and current environments;
+- the package-install smoke creates a Composer archive and installs it in a
+  disposable consumer project without development dependencies.
 
 Run all commands in this guide from the repository root. Complete the initial
 [local-development setup](LOCAL-DEVELOPMENT.md) first. The Make targets install
@@ -51,7 +53,7 @@ The underlying Composer command is `composer test:test-unit`, which selects the
 
 ## Lint and complete local check
 
-Lint all PHP under `src/` and `tests/`:
+Lint all PHP under `src/`, `tests/`, and `scripts/`:
 
 ```bash
 make lint
@@ -73,7 +75,7 @@ Install only the locked Composer dependencies with:
 make composer.install
 ```
 
-## Unit coverage
+## Enforced source coverage
 
 Generate the unit-test coverage report with:
 
@@ -81,10 +83,12 @@ Generate the unit-test coverage report with:
 make coverage
 ```
 
-This runs the same unit suite with a supported coverage driver and writes:
+This runs the same mandatory unit suite with a supported coverage driver and
+writes:
 
 ```text
 coverage/clover.xml
+coverage/summary.json
 ```
 
 The report covers PHP files in `src/` only. It is unit coverage: execution by
@@ -96,10 +100,20 @@ already loaded PCOV extension, or a bundled but normally disabled `xdebug.so`.
 It enables coverage only for this command. If none is available, it exits with
 a message asking for Xdebug or PCOV. Normal unit tests do not enable Xdebug.
 
-The current measured baseline is 100% of the executable units selected by
-PHPUnit: 7/7 classes, 38/38 methods, and 161/161 lines. CI generates and retains
-the report but does not enforce a numeric coverage threshold; treat a changed
-percentage as a review signal rather than a configured quality gate.
+After PHPUnit writes Clover, `scripts/check-coverage.php` reads the aggregate
+project metrics and requires both:
+
+- 100% executable source lines (`coveredstatements == statements` in Clover);
+- 100% source methods (`coveredmethods == methods` in Clover).
+
+Missing, malformed, internally inconsistent, or zero-total metrics fail the
+gate. A coverage reduction prints the covered and total counts, percentages,
+and numbers of uncovered lines and methods. `coverage/summary.json` records the
+same threshold result for automation.
+
+This gate does not measure or make any claim about branch coverage or mutation
+testing. Behavior assertions and both real-WordPress profiles remain mandatory
+independent gates even while line and method coverage are 100%.
 
 When PHP and Composer are installed directly on the host and a coverage driver
 is enabled, the equivalent CI-facing command is:
@@ -107,6 +121,56 @@ is enabled, the equivalent CI-facing command is:
 ```bash
 composer test:coverage
 ```
+
+The checker can also validate an existing report directly:
+
+```bash
+php scripts/check-coverage.php coverage/clover.xml coverage/summary.json
+```
+
+## Production package-install smoke
+
+Verify that the generated local package installs and autoloads without
+development dependencies:
+
+```bash
+make test.package-install
+```
+
+The CI-facing equivalent is:
+
+```bash
+composer test:package-install
+```
+
+The command creates a ZIP with `composer archive`, extracts it to a temporary
+directory, and exposes that extracted artifact to a clean Composer project as a
+mirrored path repository. The test repository supplies a synthetic `0.0.0`
+version externally, in the same role that VCS/Packagist metadata supplies a real
+release version; it does not add a `version` field to the package manifest.
+Packagist is disabled for this isolated install.
+
+Composer first resolves the isolated lock in a disposable resolver workspace,
+copies only `composer.json` and `composer.lock` into a separate empty consumer,
+and then runs a clean, locked, classmap-authoritative
+`composer install --no-dev`. The smoke fails unless the
+package is copied under `vendor/` rather than symlinked, the package has no
+nested `vendor/` or environment files, PHPUnit and Brain Monkey are absent, the
+public interface, trait, and exception classes autoload from the installed copy,
+and the runtime constraints and PSR-4 mapping match the package manifest. The
+archive root is restricted to runtime source plus `composer.json`, the license,
+changelog, and public documentation; local WordPress, CI, IDE, test, coverage,
+and developer-tooling paths are excluded.
+
+Temporary archive and consumer directories are always removed. A successful
+run writes machine-readable evidence to:
+
+```text
+coverage/package-install.json
+```
+
+The evidence includes the archive SHA-256 and size, PHP and Composer versions,
+install mode, locked package count, and the public symbols that were loaded.
 
 ## Persistent-site smoke test
 
@@ -200,12 +264,14 @@ do not set it during routine test runs.
 
 GitHub Actions runs on pushes and pull requests targeting `master`, and through
 manual workflow dispatch. Jobs are skipped while a pull request is a draft.
-The workflow has three job groups:
+The workflow has three job groups and produces exactly five required check runs:
 
 1. **PHP quality** on PHP 7.4 and 8.4: strict Composer validation, locked
    dependency installation, `composer audit`, PHP lint, and unit tests.
-2. **Coverage** on PHP 8.4 with Xdebug: `composer test:coverage`, followed by a
-   mandatory upload of `coverage/clover.xml` retained for seven days.
+2. **Coverage and package gates** on PHP 8.4 with Xdebug: enforced 100% source
+   line/method coverage followed by the production package-install smoke. The
+   Clover report, coverage summary, and package-install evidence are uploaded
+   as seven-day artifacts.
 3. **WordPress integration** with `minimum` and `latest` matrix entries: Composer
    installation followed by the matching integration runner profile. Failed
    jobs upload `tests/integration/artifacts/` for seven days when diagnostics
@@ -216,6 +282,7 @@ For the closest local pre-push reproduction, run:
 ```bash
 make check
 make coverage
+make test.package-install
 make test.integration
 ```
 

@@ -28,6 +28,26 @@
       "iTRON\\wpPostAble\\Tests\\": "tests/"
     }
   },
+  "archive": {
+    "exclude": [
+      "/.agents",
+      "/.codex",
+      "/.env*",
+      "/.github",
+      "/.gitignore",
+      "/.idea",
+      "/Makefile",
+      "/composer.lock",
+      "/coverage",
+      "/docker",
+      "/docker-compose.yml",
+      "/local-dev",
+      "/phpunit.xml.dist",
+      "/scripts",
+      "/tests",
+      "/vendor"
+    ]
+  },
   "config": {
     "platform": {
       "php": "7.4.33"
@@ -40,8 +60,9 @@
       "@lint",
       "@test:test-unit"
     ],
-    "lint": "find src tests -name '*.php' -print0 | xargs -0 -n1 php -l",
+    "lint": "find src tests scripts -name '*.php' -print0 | xargs -0 -n1 php -l",
     "test:coverage": "bash scripts/test-coverage.sh",
+    "test:package-install": "bash scripts/test-package-install.sh",
     "test:test-unit": "phpunit --testsuite unit"
   }
 }

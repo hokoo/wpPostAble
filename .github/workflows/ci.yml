@@ -91,7 +91,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.4'
-          extensions: dom, filter, json, libxml, mbstring, tokenizer, xmlwriter
+          extensions: dom, filter, json, libxml, mbstring, tokenizer, xmlwriter, zip
           coverage: xdebug
           tools: composer:v2
 
@@ -114,13 +114,28 @@ jobs:
       - name: Generate Clover coverage
         run: composer test:coverage
 
-      - name: Upload Clover coverage
+      - name: Verify production package install
+        if: ${{ !cancelled() }}
+        run: composer test:package-install
+
+      - name: Upload coverage gate evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clover-php-8.4-${{ github.run_id }}-${{ github.run_attempt }}
-          path: coverage/clover.xml
+          name: coverage-php-8.4-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            coverage/clover.xml
+            coverage/summary.json
           if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload package-install gate evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-install-php-8.4-${{ github.run_id }}-${{ github.run_attempt }}
+          path: coverage/package-install.json
+          if-no-files-found: warn
           retention-days: 7
 
   wordpress-integration:
