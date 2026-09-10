@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; Batch 3 completed; T7a security decision gate open
+- Status: Approved; T7a immutable-release control in progress
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -136,7 +136,7 @@ Tasks:
 | T5 | [#17 Enforce coverage and package-install release gates](https://github.com/hokoo/wpPostAble/issues/17) | `completed` | T3 |
 | T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `completed` | T1, T2, T5 |
 | T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `completed` | T5 |
-| T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `needs_design` | T6, owner approval |
+| T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `in_progress` | T6, owner approval |
 | T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `waiting_dependency` | T1–T7, T7a, publication approval |
 
 ## E3. Minimal 1.0 public API
@@ -427,3 +427,9 @@ Each implementation task must, in the same PR:
 - PR #29 was merged as `6b2b023`, closing T4/#16, T6/#18, and T7/#19. The post-merge run passed all five checks, including coverage/package gates and both WordPress profiles.
 - T4, T6, and T7 are `completed`; their intermediate review labels were removed from the closed issues.
 - T7a/#28 remains `needs_design`. No `0.7.0` preparation or publication work starts until the repository owner decides whether to enable release immutability.
+
+### 2026-09-11 — T7a owner decision approved
+
+- The repository owner explicitly approved enabling GitHub Release immutability for this repository.
+- T7a/#28 moved from `needs_design` to `in_progress`. The setting will be accepted only after live API read-back and independent security verification.
+- This decision does not authorize preparation or publication of `0.7.0`; the publication gate remains separate.
