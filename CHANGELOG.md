@@ -10,7 +10,9 @@ commit date otherwise. Git tags are the canonical version refs; see
 [VERSIONING.md](VERSIONING.md) for the current versioning and compatibility
 policy.
 
-## [Unreleased] — planned for 0.7.0
+## [Unreleased]
+
+## [0.7.0] - 2026-09-10
 
 ### Upgrade notes
 
@@ -246,7 +248,8 @@ At release time, rename the prepared `Unreleased` section to the exact version
 and UTC release date, update its comparison link from `HEAD` to the immutable
 tag, and create a new empty `Unreleased` section comparing that tag to `HEAD`.
 
-[Unreleased]: https://github.com/hokoo/wpPostAble/compare/0.6.2...HEAD
+[Unreleased]: https://github.com/hokoo/wpPostAble/compare/0.7.0...HEAD
+[0.7.0]: https://github.com/hokoo/wpPostAble/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/hokoo/wpPostAble/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/hokoo/wpPostAble/compare/0.6...0.6.1
 [0.6]: https://github.com/hokoo/wpPostAble/compare/0.5...0.6

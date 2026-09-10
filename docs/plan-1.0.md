@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; T7a completed; 0.7.0 publication gate closed
+- Status: Approved; T8 release preparation and dry run in progress; publication gate closed
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -137,7 +137,7 @@ Tasks:
 | T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `completed` | T1, T2, T5 |
 | T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `completed` | T5 |
 | T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `completed` | T6, owner approval |
-| T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `waiting_dependency` | T1–T7, T7a, publication approval |
+| T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `in_progress` | T1–T7, T7a, staged owner approvals |
 
 ## E3. Minimal 1.0 public API
 
@@ -272,13 +272,14 @@ Tasks:
 
 1. Batch 1 (`completed`): T1 and T3 in parallel — version/public-contract policy plus localdev/testing documentation.
 2. Batch 2 (`completed`): T2 and T5 — historical changelog plus enforceable release gates.
-3. Batch 3 (`completed`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance; T7a follows the owner immutability decision.
-4. Gate: close T7a, repeat independent E2 security QA, then request explicit approval to publish `0.7.0` through T8.
-5. Batch 4: T9, T10, and T11 in parallel after `0.7.0`.
-6. Batch 5: T12 contract audit/freeze and independent E3 QA.
-7. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
-8. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
-9. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
+3. Batch 3 (`completed`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
+4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
+5. Batch 3b (`in_progress`): T8 release preparation and non-mutating validation; explicit owner approval remains mandatory before `publish: true`.
+6. Batch 4: T9, T10, and T11 in parallel after `0.7.0`.
+7. Batch 5: T12 contract audit/freeze and independent E3 QA.
+8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
+9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
+10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
 
 Batch 1 was approved for execution on 2026-09-11.
 
@@ -319,6 +320,8 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 3 package remediation | Commit `b6dee5e`; `make test.package-install`; [PR CI run 34534670305](https://github.com/hokoo/wpPostAble/actions/runs/34534670305) | Pass: reviewed public-documentation allowlist and 5/5 jobs |
 | 2026-09-11 | Batch 3 final PR | [PR #29](https://github.com/hokoo/wpPostAble/pull/29); [CI run 34534813793](https://github.com/hokoo/wpPostAble/actions/runs/34534813793) | Pass: protected merge, 5/5 jobs |
 | 2026-09-11 | Batch 3 merge | Merge commit `6b2b023`; [post-merge CI run 34535010279](https://github.com/hokoo/wpPostAble/actions/runs/34535010279) | Pass: 5/5 jobs |
+| 2026-09-11 | T7a immutable releases | [PR #30](https://github.com/hokoo/wpPostAble/pull/30); merge `cfcc26b`; [final PR CI run 34536313635](https://github.com/hokoo/wpPostAble/actions/runs/34536313635); [post-merge CI run 34536458166](https://github.com/hokoo/wpPostAble/actions/runs/34536458166) | Pass: live `enabled: true`, independent security QA, 5/5 jobs twice |
+| 2026-09-11 | T8 release preparation | Commit `e526bed`; independent staged security review; [PR #31](https://github.com/hokoo/wpPostAble/pull/31); [first full PR CI run 34537495465](https://github.com/hokoo/wpPostAble/actions/runs/34537495465) | Pass for preparation/dry run: exact changelog/ref checks and 5/5 jobs; publication remains NO-GO |
 
 ## Transition log
 
@@ -442,3 +445,12 @@ Each implementation task must, in the same PR:
 - The release workflow and runbook remain unchanged from protected `master` and satisfy T7a's preflight, post-publication `isImmutable`, remote previous-tag ancestry, future-only boundary, and exact Packagist SHA requirements.
 - PR #30's first full CI run `34536131811` passed all five required checks and reported the branch cleanly mergeable under the protected-branch policy. The final evidence-only synchronization must pass the same checks before merge.
 - Because administrators can still disable a repository-level setting, the live owner preflight remains mandatory for every publication. T7a is `completed`; T8 remains `waiting_dependency` on the separate explicit approval to prepare and publish `0.7.0`.
+
+### 2026-09-11 — T8 preparation and dry run approved
+
+- The repository owner approved starting T8 release preparation and a non-mutating `publish: false` validation run. This approval does not authorize creating the `0.7.0` tag or GitHub Release.
+- T8/#20 moved from `waiting_dependency` to `in_progress`; T1 through T7a are complete and protected `master` at `cfcc26b` has a successful five-job post-merge run.
+- The prepared release date is `2026-09-10`, the current UTC date at task start. If UTC changes before validation, the workflow must fail closed and the date must be updated through another reviewed commit.
+- Independent read-only review of preparation commit `e526bed` passed the changelog, ancestry, repository-state, task-contract, and mutation-boundary checks. Its staged verdict is PREPARATION/Dry-run PASS and PUBLISH NO-GO pending the final owner gate.
+- PR #31's first full CI run `34537495465` passed all five protected checks. This evidence-only synchronization must pass the same matrix before the release-preparation merge.
+- After the preparation PR merges, the exact resulting `master` SHA and successful dry-run evidence will be presented at the separate owner publication gate before any `publish: true` dispatch.
