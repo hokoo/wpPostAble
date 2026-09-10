@@ -532,6 +532,32 @@ jobs:
             release_arguments+=(--latest)
           fi
 
+          # Re-read the comparison link and fetch the live remote tag at the
+          # final possible point. Historical tags are not retroactively locked
+          # when release immutability is enabled.
+          mapfile -t live_release_links < <(
+            # awk, not Bash, expands its field expression.
+            # shellcheck disable=SC2016
+            awk -v prefix="[${VERSION}]:" 'index($0, prefix) == 1 { print }' CHANGELOG.md
+          )
+          [[ "${#live_release_links[@]}" == '1' ]] || fail "release comparison link changed before publication"
+          [[ "${live_release_links[0]}" == "${release_prefix}"*"${release_suffix}" ]] || \
+            fail "release comparison link became malformed before publication"
+          previous_version="${live_release_links[0]#"${release_prefix}"}"
+          previous_version="${previous_version%"${release_suffix}"}"
+          [[ -n "${previous_version}" && "${previous_version}" != "${VERSION}" ]] || \
+            fail "release comparison link needs a distinct previous tag"
+          git check-ref-format "refs/tags/${previous_version}" >/dev/null || \
+            fail "previous comparison ref is not a valid tag name"
+
+          isolated_previous_ref='refs/release-validation/live-previous-tag'
+          git fetch --no-tags --force origin \
+            "refs/tags/${previous_version}:${isolated_previous_ref}"
+          git rev-parse --verify "${isolated_previous_ref}^{commit}" >/dev/null || \
+            fail "live remote previous tag ${previous_version} does not resolve to a commit"
+          git merge-base --is-ancestor "${isolated_previous_ref}^{commit}" "${TARGET_SHA}" || \
+            fail "live remote previous tag ${previous_version} is not an ancestor of target_sha"
+
           gh "${release_arguments[@]}"
 
           git fetch --no-tags origin "refs/tags/${VERSION}:refs/tags/${VERSION}"
@@ -542,12 +568,14 @@ jobs:
           actual_target="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json targetCommitish --jq '.targetCommitish')"
           actual_prerelease="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json isPrerelease --jq '.isPrerelease')"
           actual_draft="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json isDraft --jq '.isDraft')"
+          actual_immutable="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json isImmutable --jq '.isImmutable')"
           release_url="$(gh release view "${VERSION}" --repo "${REPOSITORY}" --json url --jq '.url')"
 
           [[ "${actual_tag}" == "${VERSION}" ]] || fail "GitHub Release tag does not match the version"
           [[ "${actual_target}" == "${TARGET_SHA}" ]] || fail "GitHub Release target does not match target_sha"
           [[ "${actual_prerelease}" == "${PRERELEASE}" ]] || fail "GitHub prerelease flag is incorrect"
           [[ "${actual_draft}" == 'false' ]] || fail "GitHub Release unexpectedly remained a draft"
+          [[ "${actual_immutable}" == 'true' ]] || fail "GitHub did not mark the published Release immutable"
 
           latest_error="${RUNNER_TEMP}/latest-release-query.err"
           : > "${latest_error}"
@@ -569,4 +597,5 @@ jobs:
             printf -- '- Release: [%s](%s)\n' "${VERSION}" "${release_url}"
             printf -- "- Target: \`%s\`\n" "${TARGET_SHA}"
             printf -- "- Prerelease: \`%s\`\n" "${PRERELEASE}"
+            printf -- "- GitHub immutable: \`%s\`\n" "${actual_immutable}"
           } >> "${GITHUB_STEP_SUMMARY}"

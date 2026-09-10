@@ -35,6 +35,16 @@ governance. If the repository is transferred to an organization, replace it
 through a reviewed ADR and an equivalent protected-environment approval before
 attempting another publication.
 
+GitHub's release-immutability setting applies only to releases created after it
+is enabled. It does not retroactively protect the historical releases or tags,
+so the workflow fetches the live remote previous tag and proves its commit is an
+ancestor of the selected target immediately before publication. For a newly
+published immutable release, GitHub technically locks the associated tag and
+release assets. GitHub still permits changes to the release title, notes,
+prerelease flag, and latest flag; the project policy forbids all of those
+post-publication changes even though that part of immutability is governance,
+not a GitHub technical control.
+
 ## Prepare the release commit
 
 1. Choose the next version according to [VERSIONING.md](../VERSIONING.md). Use a
@@ -100,10 +110,33 @@ behavior or real-WordPress checks.
 
 ## Owner publication gate
 
-After reviewing a successful non-mutating run, the repository owner runs the
-same workflow again from `master` with the identical version, SHA, and UTC date,
-and sets `publish` to `true`. The workflow deliberately reruns every gate instead
-of trusting artifacts from a previous run.
+After reviewing a successful non-mutating run, the repository owner must check
+the live immutable-release setting immediately before the publication dispatch.
+Use an owner-side `gh` session whose token has repository **Administration:
+read** permission:
+
+```bash
+test "$(
+  gh api \
+    --method GET \
+    -H 'Accept: application/vnd.github+json' \
+    -H 'X-GitHub-Api-Version: 2026-03-10' \
+    /repos/hokoo/wpPostAble/immutable-releases \
+    --jq '.enabled'
+)" = true
+```
+
+A `404`, authorization error, `false`, or empty result is a hard stop: do not
+dispatch publication. This Administration check deliberately runs in the
+owner's authenticated local session. The workflow's `github.token` has only the
+documented Contents permission and must not be treated as able to call this
+Administration endpoint. No dedicated Administration token is stored as a
+workflow secret by design.
+
+After that successful live GET, without changing the repository setting, the
+owner runs the same workflow again from `master` with the identical version,
+SHA, and UTC date, and sets `publish` to `true`. The workflow deliberately reruns
+every gate instead of trusting artifacts from a previous run.
 
 No mutation occurs unless all release jobs succeed. Immediately before
 publication the final job confirms that:
@@ -112,11 +145,14 @@ publication the final job confirms that:
 - the checkout and dispatch SHA still equal `target_sha`;
 - the target remains in current `master`;
 - neither the exact local/remote tag nor a GitHub Release exists;
-- the release notes still have the hash recorded by the first validation job.
+- the release notes still have the hash recorded by the first validation job;
+- the exact current remote previous tag from the changelog resolves to a commit
+  that is an ancestor of `target_sha`.
 
 For a version with a SemVer prerelease component, such as `1.0.0-rc.1`, the
 workflow passes `--prerelease --latest=false`. For a stable version it passes
-`--latest`. The published release is not a draft.
+`--latest`. The published release is not a draft. After creation, the job reads
+the GitHub Release back and fails unless its `isImmutable` field is `true`.
 
 ## Verify publication
 
@@ -127,7 +163,7 @@ release flags, and exact notes:
 git ls-remote --tags origin refs/tags/VERSION
 gh release view VERSION \
   --repo hokoo/wpPostAble \
-  --json tagName,targetCommitish,isDraft,isPrerelease,url
+  --json tagName,targetCommitish,isDraft,isPrerelease,isImmutable,url
 gh release view VERSION --repo hokoo/wpPostAble
 ```
 
@@ -152,19 +188,27 @@ disposable directory. Do not loosen the constraint to a range:
 
 ```bash
 release_check_dir="$(mktemp -d)"
+release_version=VERSION
+approved_target_sha=APPROVED_TARGET_SHA
 cd "${release_check_dir}"
 composer init \
   --name wppostable/release-check \
-  --require "hokoo/wppostable:VERSION" \
+  --require "hokoo/wppostable:${release_version}" \
   --no-interaction
 composer install --no-dev --prefer-dist --no-interaction
-composer show hokoo/wppostable --format=json
+installed_reference="$(
+  composer show hokoo/wppostable --format=json |
+    php -r '$package = json_decode(stream_get_contents(STDIN), true); echo $package["source"]["reference"] ?? "";'
+)"
+test "${installed_reference}" = "${approved_target_sha}"
 php -r 'require "vendor/autoload.php"; exit(interface_exists("iTRON\\wpPostAble\\wpPostAble") ? 0 : 1);'
 ```
 
 The workflow does not call Packagist and a successful GitHub publication does
-not prove that Packagist has synchronized. Treat exact-ref installation as a
-separate post-publication verification.
+not prove that Packagist has synchronized. The `source.reference` comparison is
+mandatory: a package named with the requested version but resolving to any SHA
+other than the approved `target_sha` fails verification. Treat exact-ref
+installation as a separate post-publication verification.
 
 ## Failure and immutable recovery rules
 
@@ -179,15 +223,19 @@ tag or Release exists; it never deletes, moves, recreates, or overwrites one.
 
 - If neither tag nor Release exists, fix the non-mutating cause and repeat the
   owner publication run with the same approved inputs.
-- If both exist at the approved SHA, treat publication as complete and finish
-  the independent verification.
+- If both exist at the approved SHA and the Release reports `isImmutable: true`,
+  treat publication as complete and finish the independent verification.
+- If the Release reports `isImmutable: false`, stop. Enabling the setting later
+  cannot protect that existing release; enable it through a separate owner
+  action and publish a new version instead of editing or recreating this one.
 - If only a tag exists, or the tag/Release points somewhere unexpected, stop.
   Do not repair it by moving or deleting the tag. The repository owner must
   review the immutable state and either complete metadata against the already
   approved tag through a separately authorized recovery or publish a new
   version.
-- If published notes or code need correction, prepare and release a new SemVer
-  version. Published release contents and tags are immutable.
+- If published notes, flags, or code need correction, prepare and release a new
+  SemVer version. The tag and assets are technically locked; the project policy
+  requires the otherwise-editable release metadata to remain unchanged too.
 
 The workflow contains no rollback path by design. Any action that would delete
 or mutate published release state is outside this runbook and requires a new,
