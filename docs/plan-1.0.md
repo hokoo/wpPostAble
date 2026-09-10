@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; T7a immutable-release control in progress
+- Status: Approved; T7a completed; 0.7.0 publication gate closed
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -136,7 +136,7 @@ Tasks:
 | T5 | [#17 Enforce coverage and package-install release gates](https://github.com/hokoo/wpPostAble/issues/17) | `completed` | T3 |
 | T6 | [#18 Add a controlled manual release workflow](https://github.com/hokoo/wpPostAble/issues/18) | `completed` | T1, T2, T5 |
 | T7 | [#19 Protect master and automate merged-branch cleanup](https://github.com/hokoo/wpPostAble/issues/19) | `completed` | T5 |
-| T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `in_progress` | T6, owner approval |
+| T7a | [#28 Enable and verify immutable GitHub releases](https://github.com/hokoo/wpPostAble/issues/28) | `completed` | T6, owner approval |
 | T8 | [#20 Publish the tested baseline as 0.7.0](https://github.com/hokoo/wpPostAble/issues/20) | `waiting_dependency` | T1–T7, T7a, publication approval |
 
 ## E3. Minimal 1.0 public API
@@ -433,3 +433,11 @@ Each implementation task must, in the same PR:
 - The repository owner explicitly approved enabling GitHub Release immutability for this repository.
 - T7a/#28 moved from `needs_design` to `in_progress`. The setting will be accepted only after live API read-back and independent security verification.
 - This decision does not authorize preparation or publication of `0.7.0`; the publication gate remains separate.
+
+### 2026-09-11 — T7a immutable-release control completed
+
+- The versioned GitHub API enablement request succeeded, and an immediate independent read-back returned `enabled: true`. `enforced_by_owner: false` records that no higher-level owner policy imposes the setting; repository-level enablement is active.
+- Independent read-only security QA passed with no blockers. It reconfirmed strict `master` protection, the exact five required GitHub Actions checks, admin enforcement, and disabled force-push/deletion.
+- The verification found exactly the 12 historical tags from `0.1` through `0.6.2` and 10 historical Releases, with no `0.7.0` tag or Release, no Release workflow runs, and no evidence that T7a mutated an existing release object.
+- The release workflow and runbook remain unchanged from protected `master` and satisfy T7a's preflight, post-publication `isImmutable`, remote previous-tag ancestry, future-only boundary, and exact Packagist SHA requirements.
+- Because administrators can still disable a repository-level setting, the live owner preflight remains mandatory for every publication. T7a is `completed`; T8 remains `waiting_dependency` on the separate explicit approval to prepare and publish `0.7.0`.
