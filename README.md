@@ -6,6 +6,7 @@ Once you create the instance, wpPostAble creates the WP_Post object and stores i
 ## Project documentation
 
 - [Versioning and compatibility policy](VERSIONING.md)
+- [Changelog](CHANGELOG.md)
 - [Local WordPress development](docs/LOCAL-DEVELOPMENT.md)
 - [Testing and coverage](docs/TESTING.md)
 - [1.0 delivery plan](docs/plan-1.0.md)
