@@ -14,6 +14,7 @@ namespace iTRON\wpPostAble;
 use iTRON\wpPostAble\Exceptions\wppaCreatePostException;
 use iTRON\wpPostAble\Exceptions\wppaDeletePostException;
 use iTRON\wpPostAble\Exceptions\wppaLoadPostException;
+use iTRON\wpPostAble\Exceptions\wppaParamException;
 use iTRON\wpPostAble\Exceptions\wppaSavePostException;
 use WP_Error;
 use WP_Post;
@@ -97,15 +98,92 @@ trait wpPostAbleTrait{
 		do_action( __CLASS__ . $actionName, ...$data );
 	}
 
+	/**
+	 * @throws wppaParamException
+	 */
 	public function getParam( string $param ) {
-		$data = json_decode( $this->post->post_content_filtered );
-		return $data->$param ?? null;
+		$data = $this->decodeParamMap( $param, wppaParamException::OPERATION_READ );
+		return $data->{$param} ?? null;
 	}
 
+	/**
+	 * @throws wppaParamException
+	 */
 	public function setParam( string $param, $value ) {
-		$data = json_decode( $this->post->post_content_filtered, true ) ?? [];
-		$data[ $param ] = $value;
-		$this->post->post_content_filtered = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+		$data = $this->decodeParamMap( $param, wppaParamException::OPERATION_WRITE );
+		$data->{$param} = $value;
+
+		try {
+			$encoded = json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+		} catch ( \Throwable $previous ) {
+			throw new wppaParamException(
+				$this,
+				$param,
+				wppaParamException::OPERATION_WRITE,
+				wppaParamException::REASON_ENCODE_FAILED,
+				JSON_ERROR_NONE,
+				"Cannot write parameter \"$param\": JSON encoding failed.",
+				$previous
+			);
+		}
+
+		$json_error_code = json_last_error();
+		if ( false === $encoded || JSON_ERROR_NONE !== $json_error_code ) {
+			throw new wppaParamException(
+				$this,
+				$param,
+				wppaParamException::OPERATION_WRITE,
+				wppaParamException::REASON_ENCODE_FAILED,
+				$json_error_code,
+				"Cannot write parameter \"$param\": JSON encoding failed (" . json_last_error_msg() . ').'
+			);
+		}
+
+		$this->post->post_content_filtered = $encoded;
+	}
+
+	/**
+	 * @throws wppaParamException
+	 */
+	private function decodeParamMap( string $param, string $operation ): \stdClass {
+		$content = $this->post->post_content_filtered;
+		if ( '' === $content ) {
+			return new \stdClass();
+		}
+
+		$data = json_decode( $content );
+		$json_error_code = json_last_error();
+		if ( JSON_ERROR_NONE !== $json_error_code ) {
+			throw new wppaParamException(
+				$this,
+				$param,
+				$operation,
+				wppaParamException::REASON_INVALID_JSON,
+				$json_error_code,
+				"Cannot $operation parameter \"$param\": invalid parameter JSON (" . json_last_error_msg() . ').'
+			);
+		}
+
+		if ( $data instanceof \stdClass ) {
+			return $data;
+		}
+
+		if ( is_array( $data ) ) {
+			$map = new \stdClass();
+			foreach ( $data as $key => $value ) {
+				$map->{(string) $key} = $value;
+			}
+			return $map;
+		}
+
+		throw new wppaParamException(
+			$this,
+			$param,
+			$operation,
+			wppaParamException::REASON_INVALID_ROOT,
+			JSON_ERROR_NONE,
+			"Cannot $operation parameter \"$param\": parameter JSON root must be an object or array."
+		);
 	}
 
 	/**
