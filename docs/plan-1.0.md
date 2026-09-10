@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; Batch 3 security decision gate open
+- Status: Approved; Batch 3 in review; T7a security decision gate open
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -314,6 +314,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T6 | Commit `c8f59c1`; actionlint 1.7.12/ShellCheck 0.11.0; permission/YAML invariants; SemVer/changelog negative cases; exact-version `0.6.2` Composer install | Pass; publication intentionally not run |
 | 2026-09-11 | E1 independent QA | SemVer/history, localdev/testing, contribution/template, links/commands, archive boundary, and documentation-language audit | Pass; no blockers |
 | 2026-09-11 | E2 independent security QA | Live release-immutability API and release-workflow TOCTOU review; [#28](https://github.com/hokoo/wpPostAble/issues/28) | Fail for publication: release immutability disabled; previous tag not revalidated in final job |
+| 2026-09-11 | T6 security remediation | Commit `7c051a2`; final live remote-tag ancestry proof, immutable-release pre/post gates, exact Packagist source reference | Pass: independent re-review closed the workflow blocker |
 
 ## Transition log
 
@@ -401,3 +402,11 @@ Each implementation task must, in the same PR:
 - The workflow's final job did not repeat remote previous-tag ancestry validation; remediation is in progress within T6.
 - GitHub's live repository API reports release immutability `enabled: false`. GitHub documents that enablement applies only to future releases, so it must be enabled before `0.7.0` if the approved immutable-release contract is to be technically enforced.
 - Focused task T7a/#28 was created as `needs_design`. No release was dispatched and no release/tag setting was changed pending the repository owner's explicit decision.
+- T6/#18 returned from `review` to `in_progress` for the workflow/runbook remediation that does not require the live-setting decision.
+
+### 2026-09-11 — T6 security remediation verified
+
+- Immediately before its sole mutation, the final job now re-reads the exact comparison link, validates and fetches the current remote previous tag into an isolated ref, resolves its commit, and proves ancestry to the approved target.
+- The runbook adds the owner-side Administration-read immutability preflight without adding a workflow administration secret. Post-publication verification requires `isImmutable: true`, and Packagist verification requires the installed source reference to equal the approved SHA.
+- Independent security re-review passed the code, permissions, quoting, ordering, future-only immutability semantics, and exact-SHA checks. T6/#18 returned to `review` for Batch 3 CI and merge.
+- The sole residual publication blocker is T7a: the live GitHub release-immutability setting remains disabled pending explicit owner approval.
