@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; execution not started
+- Status: Approved; Batch 1 in review
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -88,9 +88,9 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T1 | [#13 Document SemVer and the 1.0 public contract](https://github.com/hokoo/wpPostAble/issues/13) | `todo` | None |
+| T1 | [#13 Document SemVer and the 1.0 public contract](https://github.com/hokoo/wpPostAble/issues/13) | `review` | None |
 | T2 | [#14 Establish the historical changelog and release-note policy](https://github.com/hokoo/wpPostAble/issues/14) | `waiting_dependency` | T1 |
-| T3 | [#15 Document local development and every test layer](https://github.com/hokoo/wpPostAble/issues/15) | `todo` | None |
+| T3 | [#15 Document local development and every test layer](https://github.com/hokoo/wpPostAble/issues/15) | `review` | None |
 | T4 | [#16 Add contribution and pull-request documentation gates](https://github.com/hokoo/wpPostAble/issues/16) | `waiting_dependency` | T1, T2, T3 |
 
 ## E2. Release governance and 0.7.0
@@ -269,7 +269,7 @@ Tasks:
 
 ## Planned execution batches
 
-1. Batch 1: T1 and T3 in parallel — version/public-contract policy plus localdev/testing documentation.
+1. Batch 1 (`review`): T1 and T3 in parallel — version/public-contract policy plus localdev/testing documentation.
 2. Batch 2: T2 and T5 — historical changelog plus enforceable release gates.
 3. Batch 3: T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
 4. Gate: independent E1/E2 QA, then explicit approval to publish `0.7.0` through T8.
@@ -279,7 +279,7 @@ Tasks:
 8. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
 9. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
 
-Batch 1 is proposed but not approved for execution yet.
+Batch 1 was approved for execution on 2026-09-11.
 
 ## Documentation rule for every task
 
@@ -297,6 +297,10 @@ Each implementation task must, in the same PR:
 |---|---|---|---|
 | 2026-09-11 | Planning | ADR 0001 approved; milestone and execution issues created | Pass |
 | 2026-09-11 | Planning artifact | Commit `183f428`; [PR #25](https://github.com/hokoo/wpPostAble/pull/25); [CI run 34524922288](https://github.com/hokoo/wpPostAble/actions/runs/34524922288) | Pass: 5/5 jobs |
+| 2026-09-11 | Planning merge | Merge commit `f38b461`; [post-merge CI run 34526304611](https://github.com/hokoo/wpPostAble/actions/runs/34526304611) | Pass: 5/5 jobs |
+| 2026-09-11 | T1 | Commit `d86c438`; source/API/tag audit; `composer validate --strict`; `git diff --check` | Pass |
+| 2026-09-11 | T3 | Commit `d90cd49`; `make check`; `make smoke`; `make coverage`; minimum/latest integration artifacts `minimum-20260910T203202Z-36997-22347` and `latest-20260910T203243Z-38215-22367` | Pass |
+| 2026-09-11 | Batch 1 integration | Commit `86f1fda`; documentation links and PHP 7.4-compatible README example | Pass |
 
 ## Transition log
 
@@ -311,3 +315,18 @@ Each implementation task must, in the same PR:
 - PR #25 passed PHP 7.4/8.4 quality, coverage, and WordPress minimum/latest checks.
 - Readiness sweep: T1 and T3 are `todo`; every other task is `waiting_dependency` with an explicit upstream dependency.
 - Next decision: approve or redirect execution Batch 1 (T1 and T3).
+
+### 2026-09-11 — Batch 1 started
+
+- The repository owner approved the recommended Batch 1.
+- Planning PR #25 was merged as `f38b461` and post-merge CI passed 5/5 jobs.
+- T1/#13 and T3/#15 moved from `todo` to `in_progress`.
+- Worker ownership is isolated: T1 owns `VERSIONING.md`; T3 owns the local-development and testing guides. README, plan status, and evidence integration remain with the delivery owner.
+
+### 2026-09-11 — Batch 1 implementation complete
+
+- T1 produced the SemVer policy and a source-grounded inventory of the current public compatibility surface in `d86c438`.
+- T3 produced local-development and testing guides in `d90cd49`; unit, smoke, coverage, and both isolated WordPress profiles passed.
+- README integration was committed as `86f1fda`, including correction of the PHP 7.4 constructor example from `int|null` to `?int`.
+- `make setup` could not pass its host-mapping pre-step in the headless agent shell because interactive `sudo` is required. The guide now states this explicitly; the non-destructive setup script then reconciled the existing site successfully and preserved content.
+- T1/#13 and T3/#15 moved to `review`, pending branch CI and merge.
