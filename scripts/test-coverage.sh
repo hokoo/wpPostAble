@@ -46,3 +46,5 @@ mkdir -p coverage
     --testsuite unit \
     --coverage-text \
     --coverage-clover coverage/clover.xml
+
+"${PHP_BIN}" scripts/check-coverage.php coverage/clover.xml coverage/summary.json
