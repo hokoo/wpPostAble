@@ -12,8 +12,10 @@ The repository has four complementary validation layers:
 
 Run all commands in this guide from the repository root. Complete the initial
 [local-development setup](LOCAL-DEVELOPMENT.md) first. The Make targets install
-Composer dependencies through the persistent PHP container before running the
-requested test command.
+Composer dependencies through the persistent PHP container when their test
+layer needs the development autoloader. The persistent-site smoke relies on
+the completed setup, while the package-install smoke creates its own isolated
+production dependency tree.
 
 ## Requirements and side effects
 
