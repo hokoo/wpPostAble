@@ -37,8 +37,8 @@ policy.
 - Added enforceable 100% source line and method coverage gates plus a
   production Composer artifact-install smoke check, with machine-readable
   evidence for both.
-- Added formal versioning, compatibility, local-development, and testing
-  policies for the path to 1.0.
+- Added formal versioning, compatibility, local-development, testing, and
+  contribution/PR evidence policies for the path to 1.0.
 
 ### Changed
 
