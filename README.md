@@ -6,6 +6,8 @@ Each instance holds a WP_Post, creating one only when no existing post or ID is 
 ## Project documentation
 
 - [Versioning and compatibility policy](VERSIONING.md)
+- [1.0 API reference](docs/API.md)
+- [Upgrading from 0.7.x to 1.0](docs/UPGRADING-1.0.md)
 - [Changelog](CHANGELOG.md)
 - [Local WordPress development](docs/LOCAL-DEVELOPMENT.md)
 - [Testing and coverage](docs/TESTING.md)
@@ -13,7 +15,7 @@ Each instance holds a WP_Post, creating one only when no existing post or ID is 
 - [Contributing](CONTRIBUTING.md)
 - [1.0 delivery plan](docs/plan-1.0.md)
 
-You can manage your instance with such methods as
+The 1.0 interface has 19 methods. The most common operations include
 
 - `$instance->getTitle();`
 - `$instance->setTitle();`
@@ -28,18 +30,21 @@ You can manage your instance with such methods as
 - `$instance->getPost();`
 - `$instance->getPostType();`
 - `$instance->savePost();`
-- `$instance->loadPost();`
 - `$instance->publish();`
 - `$instance->draft();`
 
-and others.
+See the [API reference](docs/API.md) for exact PHP 7.4-compatible signatures,
+return behavior, exceptions, hooks, and persistence rules. There is no public
+reload or rebind operation; create another model instance to load another post.
 
-Use 
+Use
 
 - `$instance->getParam();`
 - `$instance->setParam();`
 
-method to manage metafields, stored inside `posts` table using `post_content_filtered` field.
+to manage the JSON parameter map stored in `WP_Post::post_content_filtered`.
+`setParam()` changes the in-memory post, returns `void`, and requires
+`savePost()` for persistence.
 
 # How to use
 
@@ -58,7 +63,8 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
    }
     ```
 
-2. Call `wpPostAble()` method in the beginning of the `__construct()` method of your class.
+2. Call the private `wpPostAble()` trait initializer at the beginning of the
+   `__construct()` method of the class that imports the trait.
 
    Pass to it two parameters
 
@@ -70,8 +76,8 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
       /**
        * @param int|WP_Post|null $post_id
        *
-       * @throws Exception\wppaLoadPostException
-       * @throws Exception\wppaCreatePostException
+       * @throws wppaLoadPostException
+       * @throws wppaCreatePostException
        */
       public function __construct( $post_id = null ) {
          $this->wpPostAble( self::POST_TYPE, $post_id );
@@ -79,6 +85,12 @@ method to manage metafields, stored inside `posts` table using `post_content_fil
          // Do anything you need
       }
    ```
+
+   `wpPostAble()` is a required constructor-only trait-composition seam. It is
+   not public, protected, or overridable. The associated `$post` property and
+   the `loadPost()`/`loadPostObject()` helpers are also private. Use
+   `getPost()` for supported access to the mutable `WP_Post`, and construct a
+   new model when a different post must be loaded.
 
 ## Now you are able to use your class
 
@@ -159,4 +171,7 @@ You can do it by single line
 $item->setTitle('The best item')->setSlug('the-best-item')->setMenuOrder(-7)->publish();
 ```
 
-More options you can find in the description above and in the source code.
+For the complete contract, see [API.md](docs/API.md). Consumers moving from
+`0.7.x` should follow [UPGRADING-1.0.md](docs/UPGRADING-1.0.md), especially when
+they implement the interface manually, override trait methods, or previously
+accessed protected `$post` directly.

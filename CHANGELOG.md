@@ -14,6 +14,16 @@ policy.
 
 ### Upgrade notes
 
+- `wpPostAble` now declares the complete 19-method contract. Manual
+  implementations and trait overrides must match its PHP 7.4-compatible return
+  declarations and must implement the existing public `getParam()` and
+  `setParam()` operations. Trait consumers without overrides receive the aligned
+  methods automatically.
+- The trait's `$post` association property is now private. Replace direct
+  `$this->post` or `$object->post` access with `getPost()`; construct a new model
+  rather than assigning a different post to the association.
+- `loadPost()` remains private. Its former README listing was incorrect; load a
+  different ID or `WP_Post` by constructing a new model instance.
 - `wpPostAble` now requires `getSlug(): string` and chainable
   `setSlug(string $slug): self`. Classes using `wpPostAbleTrait` receive the
   implementation automatically; manual implementations and overrides must add
@@ -25,6 +35,7 @@ policy.
 
 ### Added
 
+- Added a complete 1.0 API reference and a `0.7.x` to 1.0 migration guide.
 - Added initialization from an existing `WP_Post` object. The model retains the
   supplied object identity and applies the normal post-type, metadata, and load
   lifecycle without inserting or looking up the post again.
@@ -37,9 +48,29 @@ policy.
 
 ### Changed
 
+- Aligned all interface and trait return declarations that PHP 7.4 can express,
+  added `getParam()` and non-chainable `setParam(): void` to the interface, and
+  froze method parameter names for consumers using PHP 8 named arguments.
+- Kept the private `wpPostAble()` constructor seam and private loading helpers,
+  and made the post association private. `getPost()` remains the supported way
+  to access and mutate the active `WP_Post`.
+- Empty non-`WP_Error` creation and saving results now expose stable
+  `create_post_failed` and `save_post_failed` `WP_Error` codes with minimal post
+  type or post ID context. Original WordPress errors remain unchanged.
+- Froze the legacy exception classes as non-final with their public constructors
+  and public context-property existence preserved for 1.x. Getters and constants
+  are recommended; exact messages, direct mutation behavior, and serialization
+  shape are not guaranteed.
 - Initialization now accepts exactly `int|WP_Post|null` and throws `TypeError`
   for other values. Numeric strings, floats, and booleans that the earlier
   native `int` parameter could weakly coerce must now be passed as integers.
+
+### Documentation
+
+- Documented safe exception diagnostics. Complete exception objects may retain
+  post content, metadata, or arbitrary WordPress error data and should not be
+  serialized or logged; consumers should emit only allowlisted, redacted scalar
+  context.
 
 ## [0.7.0] - 2026-09-10
 

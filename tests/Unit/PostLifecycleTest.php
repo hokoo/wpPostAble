@@ -209,6 +209,12 @@ final class PostLifecycleTest extends WordPressTestCase {
 			self::assertInstanceOf( TestPostable::class, $exception->getPostable() );
 			self::assertInstanceOf( WP_Error::class, $exception->getError() );
 			self::assertSame( $message, $exception->getMessage() );
+			if ( $result instanceof WP_Error ) {
+				self::assertSame( $result, $exception->getError() );
+			} else {
+				self::assertSame( 'create_post_failed', $exception->getError()->get_error_code() );
+				self::assertSame( [ 'post_type' => 'book' ], $exception->getError()->get_error_data() );
+			}
 		}
 	}
 
@@ -217,7 +223,10 @@ final class PostLifecycleTest extends WordPressTestCase {
 
 		return [
 			'WordPress error' => [ $error, 'Could not create post.' ],
-			'zero result'     => [ 0, '' ],
+			'zero result'     => [ 0, 'Unable to create post of type [ book ].' ],
+			'false result'    => [ false, 'Unable to create post of type [ book ].' ],
+			'null result'     => [ null, 'Unable to create post of type [ book ].' ],
+			'empty result'    => [ '', 'Unable to create post of type [ book ].' ],
 		];
 	}
 

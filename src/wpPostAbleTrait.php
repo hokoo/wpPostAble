@@ -28,7 +28,7 @@ trait wpPostAbleTrait{
 	/**
 	 * @var WP_Post
 	 */
-	protected $post;
+	private $post;
 
 	/**
 	 * @var array
@@ -80,7 +80,13 @@ trait wpPostAbleTrait{
 			], true );
 
 			if ( empty( $post_id ) || is_wp_error( $post_id ) ){
-				$error = empty( $post_id ) ? new WP_Error() : $post_id;
+				$error = empty( $post_id )
+					? new WP_Error(
+						'create_post_failed',
+						"Unable to create post of type [ {$this->getPostType()} ].",
+						[ 'post_type' => $this->getPostType() ]
+					)
+					: $post_id;
 				/** @var wpPostAble $this */
 				throw new wppaCreatePostException( $this, $error, $error->get_error_message() );
 			}
@@ -124,7 +130,7 @@ trait wpPostAbleTrait{
 	/**
 	 * @throws wppaParamException
 	 */
-	public function setParam( string $param, $value ) {
+	public function setParam( string $param, $value ): void {
 		$data = $this->decodeParamMap( $param, wppaParamException::OPERATION_WRITE );
 		$data->{$param} = $value;
 
@@ -204,7 +210,7 @@ trait wpPostAbleTrait{
 	/**
 	 * @throws wppaDeletePostException
 	 */
-	public function deletePost(){
+	public function deletePost(): void {
 		$post = $this->post;
 		$post_id = $post->ID;
 
@@ -243,7 +249,13 @@ trait wpPostAbleTrait{
 		}
 		$result = wp_update_post( $postData, true );
 		if ( empty( $result ) || is_wp_error( $result ) ){
-			$error = empty( $result ) ? new WP_Error() : $result;
+			$error = empty( $result )
+				? new WP_Error(
+					'save_post_failed',
+					"Unable to save post [ {$this->post->ID} ].",
+					[ 'post_id' => $this->post->ID ]
+				)
+				: $result;
 			/** @var wpPostAble $this */
 			throw new wppaSavePostException( $this, $error, $error->get_error_message() );
 		}

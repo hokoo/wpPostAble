@@ -127,6 +127,12 @@ final class PostMutationTest extends WordPressTestCase {
 			self::assertSame( $postable->getPost(), $exception->getPost() );
 			self::assertInstanceOf( WP_Error::class, $exception->getError() );
 			self::assertSame( $message, $exception->getMessage() );
+			if ( $result instanceof WP_Error ) {
+				self::assertSame( $result, $exception->getError() );
+			} else {
+				self::assertSame( 'save_post_failed', $exception->getError()->get_error_code() );
+				self::assertSame( [ 'post_id' => 23 ], $exception->getError()->get_error_data() );
+			}
 		}
 
 		self::assertSame( $postable, $postable->savePost() );
@@ -147,7 +153,7 @@ final class PostMutationTest extends WordPressTestCase {
 
 		return [
 			'WordPress error' => [ $error, 'Could not save post.' ],
-			'zero result'     => [ 0, '' ],
+			'zero result'     => [ 0, 'Unable to save post [ 23 ].' ],
 		];
 	}
 

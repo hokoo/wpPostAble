@@ -58,9 +58,10 @@ final class DeletePostTest extends WordPressTestCase {
 			self::assertSame( $postable, $exception->getPostable() );
 			self::assertSame( $post, $exception->getPost() );
 			self::assertInstanceOf( WP_Error::class, $exception->getError() );
-			self::assertNotEmpty( $exception->getError()->get_error_code() );
-			self::assertNotEmpty( $exception->getError()->get_error_message() );
-			self::assertNotEmpty( $exception->getMessage() );
+			self::assertSame( 'delete_post_failed', $exception->getError()->get_error_code() );
+			self::assertSame( 'Unable to delete post [ 73 ].', $exception->getError()->get_error_message() );
+			self::assertSame( [ 'post_id' => 73 ], $exception->getError()->get_error_data() );
+			self::assertSame( 'Unable to delete post [ 73 ].', $exception->getMessage() );
 		}
 
 		self::assertSame( $post, $postable->getPost() );

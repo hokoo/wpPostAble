@@ -77,8 +77,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::error( $exception->getMessage() );
 			}
 
-			// Cleanup intentionally uses WordPress Core. The library delete behavior
-			// has a known defect and belongs to its dedicated regression test.
+			// Cleanup uses WordPress Core so this create/save/read smoke remains
+			// independent from the separately tested delete lifecycle.
 			if ( ! wp_delete_post( $post_id, true ) ) {
 				WP_CLI::error( 'Smoke assertions passed, but fixture cleanup failed.' );
 			}
