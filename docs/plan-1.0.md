@@ -1,10 +1,10 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E2, 0.7.0, and Batch 4 completed; T12 decision gate
+- Status: Approved; E2, 0.7.0, and Batch 4 completed; T12 in progress
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
-- Pending API freeze decision: [ADR 0002](decisions/0002-1.0-api-freeze.md)
+- Accepted API freeze decision: [ADR 0002](decisions/0002-1.0-api-freeze.md)
 - Planning PR: [#25](https://github.com/hokoo/wpPostAble/pull/25)
 - Baseline: `master` at `b1e998dac9a1d16dd969f2b2e2e2744be0a9ecd0`
 
@@ -183,7 +183,7 @@ Tasks:
 | T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `completed` | T8 |
 | T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `completed` | T8 |
 | T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `completed` | T8 |
-| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `needs_design` | T1–T4, T9–T11; owner approval of proposed ADR 0002 |
+| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `in_progress` | T1–T4, T9–T11; accepted ADR 0002 |
 
 ## E4. Release candidate and consumer validation
 
@@ -277,7 +277,7 @@ Tasks:
 4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
 6. Batch 4 (`completed`): T9, T10, and T11 after the verified `0.7.0` baseline.
-7. Batch 5 (`needs_design`): T12 contract freeze and independent E3 QA after owner approval of [proposed ADR 0002](decisions/0002-1.0-api-freeze.md).
+7. Batch 5 (`in_progress`): T12 contract freeze followed by independent E3 QA under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md).
 8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
 10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
@@ -536,3 +536,12 @@ Each implementation task must, in the same PR:
 - All observed implementers use the trait and call private `wpPostAble()` from the adopting constructor; none calls or overrides `loadPost()`. Current consumers use `getPost()` instead of protected `$post`, though historical `cf7-telegram` code confirms direct property access existed and may remain in stale/private consumers.
 - No observed consumer constructs library exceptions directly or reads their context properties directly. Existing consumers use getters and `getMessage()`, but absence in known public heads does not prove private consumers are unaffected.
 - Proposed ADR 0002 records four explicit owner gates and recommended choices. Runtime implementation, T12 status `todo`, and RC preparation must wait until that ADR is accepted.
+
+### 2026-09-11 — T12 contract approved and implementation started
+
+- The repository owner approved all four recommendations in ADR 0002: the
+  19-method PHP 7.4 contract, private initializer/loaders/post state, preserved
+  legacy public exception context, and stable create/save fallback codes.
+- ADR 0002 is `Accepted`, and T12 moved from `needs_design` to `in_progress`.
+  Runtime, tests, and documentation are being implemented; T12 is not complete
+  and no T12 verification evidence has been recorded yet.

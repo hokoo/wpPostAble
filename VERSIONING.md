@@ -85,8 +85,8 @@ For a tagged 1.x release, SemVer protects:
 
 - the Composer package name `hokoo/wppostable` and the PSR-4 namespace
   `iTRON\wpPostAble\`;
-- the interface, trait, exception types, and public or protected members listed
-  below;
+- the 19-method interface, matching public trait methods, exception types, and
+  documented private trait-composition seam listed below;
 - documented method inputs, return behavior, chainability, and exception types;
 - documented WordPress hook names, order, timing, defaults, and arguments;
 - the metadata and JSON persistence contracts described below.
@@ -96,57 +96,60 @@ point are implementation details. Tests, fixtures, Docker services, Make targets
 and scripts are development interfaces rather than the runtime API.
 
 Diagnostic exception-message wording is not stable. Exception classes, their
-inheritance and implemented interfaces, public context accessors, reason
-constants, and machine-readable error codes are stable.
+inheritance, non-final status and implemented interfaces, public constructors,
+public context-property existence and accessors, reason constants, and
+machine-readable error codes are stable. Direct context mutation and serialized
+exception shape are not protected behavior.
+
+The complete consumer reference is [docs/API.md](docs/API.md). The migration
+from `0.7.x` is documented in
+[docs/UPGRADING-1.0.md](docs/UPGRADING-1.0.md).
 
 ### Interface and trait methods
 
-The following table records the implementation present before the 1.0 API
-freeze. “Interface” means the method is declared by `wpPostAble`; every listed
-public trait method is consumer-facing even where the interface currently omits
-it.
+The 1.0 interface and trait expose the following 19 methods. Native signatures,
+including parameter names, are protected for 1.x so callers on PHP 8 can rely on
+named arguments. `getParam()` and `getMetaField()` alone have untyped native
+returns because their documented `mixed|null` result cannot be expressed with
+PHP 7.4 syntax.
 
-| Method | Interface | Current return behavior | Protected behavior |
-|---|:---:|---|---|
-| `getPost(): WP_Post` | yes | active associated `WP_Post` | Returns the same mutable post object held by the model. It is not valid after a successful delete. |
-| `savePost()` | yes | `$this` (`self`) | Persists the current post and explicitly changed metadata; throws `wppaSavePostException` on a WordPress error or empty result. |
-| `deletePost()` | yes | `null` | Calls `wp_delete_post($id)` with Core's default force behavior. Success invalidates the model; failure preserves it and throws `wppaDeletePostException`. |
-| `getPostType()` | yes | `string` | Returns the post type supplied during initialization. |
-| `getTitle()` | yes | `string` | Returns `WP_Post::post_title`. |
-| `setTitle(string $title)` | yes | `$this` (`self`) | Changes the in-memory title and is chainable; persistence requires a save. |
-| `getSlug(): string` | yes | `string` | Returns the current in-memory `WP_Post::post_name`. |
-| `setSlug(string $slug): self` | yes | `$this` (`self`) | Stores the supplied slug in memory and is chainable; Core normalization and persistence require a save and reload. |
-| `getMenuOrder(): int` | yes | `int` | Returns the current in-memory `WP_Post::menu_order`. |
-| `setMenuOrder(int $menuOrder): self` | yes | `$this` (`self`) | Stores any integer menu order in memory and is chainable; persistence requires a save. It does not reorder other posts. |
-| `getStatus()` | yes | `string` | Returns `WP_Post::post_status`. |
-| `setStatus(string $status)` | yes | `$this` (`self`) | Changes the in-memory status and is chainable; persistence requires a save. |
-| `setMetaField(string $meta_key, $meta_value)` | yes | `$this` (`self`) | Changes the in-memory single-value view, marks only that key dirty, and is chainable. |
-| `getMetaField(string $meta_key)` | yes | mixed or `null` | Returns the loaded/assigned value, or `null` when the key is absent. |
-| `getMetaFields()` | yes | `array` | Returns the in-memory single-value metadata map. |
-| `publish()` | yes | `$this` (`self`) | Sets status to `publish` and immediately saves. |
-| `draft()` | yes | `$this` (`self`) | Sets status to `draft` and immediately saves. |
-| `getParam(string $param)` | no | mixed or `null` | Reads one value from the JSON parameter map and throws `wppaParamException` for invalid stored data. |
-| `setParam(string $param, $value)` | no | `null` | Re-encodes the in-memory JSON parameter map; it is not chainable and persistence requires a save. |
+| Method | Return behavior | 1.x behavior |
+|---|---|---|
+| `getPost(): WP_Post` | active associated `WP_Post` | Returns the same mutable post object held privately by the model. It is not valid after a successful delete. |
+| `savePost(): self` | `$this` | Persists the current post and explicitly changed metadata; throws `wppaSavePostException` on a WordPress error or empty result. |
+| `deletePost(): void` | `null` | Calls `wp_delete_post($id)` with Core's default force behavior. Success invalidates the model; failure preserves it and throws `wppaDeletePostException`. |
+| `getPostType(): string` | post-type string | Returns the post type supplied during initialization. |
+| `getTitle(): string` | title string | Returns `WP_Post::post_title`. |
+| `setTitle(string $title): self` | `$this` | Changes the in-memory title and is chainable; persistence requires a save. |
+| `getSlug(): string` | slug string | Returns the current in-memory `WP_Post::post_name`. |
+| `setSlug(string $slug): self` | `$this` | Stores the supplied slug in memory and is chainable; Core normalization and persistence require a save and reload. |
+| `getMenuOrder(): int` | menu-order integer | Returns the current in-memory `WP_Post::menu_order`. |
+| `setMenuOrder(int $menuOrder): self` | `$this` | Stores any integer menu order in memory and is chainable; persistence requires a save. It does not reorder other posts. |
+| `getStatus(): string` | status string | Returns `WP_Post::post_status`. |
+| `setStatus(string $status): self` | `$this` | Changes the in-memory status and is chainable; persistence requires a save. |
+| `setMetaField(string $meta_key, $meta_value): self` | `$this` | Changes the in-memory single-value view, marks only that key dirty, and is chainable. |
+| `getMetaField(string $meta_key)` | mixed or `null` | Returns the loaded/assigned value, or `null` when the key is absent. |
+| `getMetaFields(): array` | metadata array | Returns the in-memory single-value metadata map. |
+| `getParam(string $param)` | mixed or `null` | Reads one value from the JSON parameter map and throws `wppaParamException` for invalid stored data. |
+| `setParam(string $param, $value): void` | `null` | Re-encodes the in-memory JSON parameter map; it is not chainable and persistence requires a save. |
+| `publish(): self` | `$this` | Sets status to `publish` and immediately saves. |
+| `draft(): self` | `$this` | Sets status to `draft` and immediately saves. |
 
-The native signatures in the released source remain authoritative where the
-interface currently omits a return type that the trait declares. Changing a
-parameter type, narrowing an accepted input, changing a return type or
-chainability, or adding a new failure for an input that was previously supported
-is a compatibility change.
+Changing a parameter name or type, narrowing an accepted input, changing a
+return type or chainability, or adding a new failure for an input that was
+previously supported is a compatibility change.
 
-Classes using `wpPostAbleTrait` receive the slug and menu-order implementations
-automatically. A class that implements `wpPostAble` manually, or overrides the
-corresponding trait methods, must add compatible `getSlug(): string`,
-`setSlug(string $slug): self`, `getMenuOrder(): int`, and
-`setMenuOrder(int $menuOrder): self` signatures before adopting the 1.0
-interface. These accessors use existing `WP_Post` fields, so no stored-data
-migration is required.
+Classes using `wpPostAbleTrait` without overrides receive all 19 implementations
+automatically. A class that implements `wpPostAble` manually, or overrides a
+trait method, must use compatible 1.0 signatures. See the complete checklist in
+[docs/UPGRADING-1.0.md](docs/UPGRADING-1.0.md). The interface alignment and new
+field accessors require no stored-data migration.
 
-The trait also exposes the protected property `$post` to the adopting class and
-its subclasses. It contains the active `WP_Post` and becomes `null` after a
-successful delete. Its exact long-term status is an implementer-surface question
-to be resolved by the T12 1.0 contract freeze; until then it must not be silently
-renamed, removed, or made private.
+The trait's `$post` association property is private in 1.0. Direct access is not
+an implementer extension point. `getPost()` is the supported way to obtain and
+mutate the active `WP_Post`; assigning or unsetting the association is not
+supported. Code that accessed the previously protected property must migrate
+before adopting 1.0.
 
 ### Implementer initialization surface
 
@@ -168,20 +171,21 @@ of an instance that already contains a `WP_Post` returns the same instance
 without creating or loading again. Creation can throw `wppaCreatePostException`;
 loading can throw `wppaLoadPostException`.
 
-This method is `private` in the current trait but is documented and required by
-implementers. Its untyped native parameter is a PHP 7.4 compatibility boundary;
-the `int|WP_Post|null` docblock and runtime `TypeError` validation define the
-accepted union. T12 must explicitly settle its visibility; it is not being
-treated as an accidental private helper.
+This method remains private but its name, signature, accepted inputs, and
+constructor-only role are a documented trait-composition contract. It can be
+called by the class that imports the trait; it is not public, protected, or an
+override point for subclasses. Its untyped native parameter is a PHP 7.4
+compatibility boundary; the `int|WP_Post|null` docblock and runtime `TypeError`
+validation define the accepted union.
 
-`loadPost(int $post_id): self` is currently private even though the historical
-README lists it among instance operations. External calls are therefore not
-supported by the current code. T12 must resolve this documentation/code mismatch
-before `1.0.0-rc.1` rather than silently adding it to or excluding it from the
-frozen 1.0 API.
+`loadPost(int $post_id): self` and `loadPostObject(WP_Post $post): self` are
+private implementation details. The historical README entry suggesting an
+external `loadPost()` call was incorrect. Construct a new model with an ID or
+`WP_Post`; 1.0 does not define reload or rebind semantics.
 
-The remaining private trait methods and the private properties `$post_type`,
-`$post_meta`, and `$dirty_post_meta` are implementation details.
+The remaining private trait methods and the private properties `$post`,
+`$post_type`, `$post_meta`, and `$dirty_post_meta` are implementation details,
+except for the explicitly documented initializer seam above.
 
 ### Exceptions
 
@@ -208,10 +212,28 @@ new wppaParamException(wpPostAble $postable, string $param_name, string $operati
 | `wppaDeletePostException` | Extends `wppaException` and implements `wpException`; public `$post` and `$error`; `getPost(): WP_Post` preserves the original post and `getError(): WP_Error` exposes `delete_post_failed`. |
 | `wppaParamException` | Extends `wppaException`; exposes operation constants `OPERATION_READ` and `OPERATION_WRITE`, reason constants `REASON_INVALID_JSON`, `REASON_INVALID_ROOT`, and `REASON_ENCODE_FAILED`, plus `getParamName()`, `getOperation()`, `getReason()`, and `getJsonErrorCode()`. Its exception code equals the JSON error code. |
 
-The public constructors and public context properties of these classes are part
-of the current observable surface. T12 must decide whether direct exception
-construction and property access remain recommended in 1.0; they remain
-protected unless that decision is made before the RC.
+These classes remain non-final. Their public constructors and public
+context-property existence are preserved for compatibility through 1.x. New
+code should use the getters and constants: direct property mutation, arbitrary
+manually constructed invalid state, and serialized object shape are not
+protected behavior.
+
+When `wp_insert_post()` or `wp_update_post()` returns a `WP_Error`, that exact
+Core object is preserved. An empty non-`WP_Error` result receives a stable
+synthetic error:
+
+| Operation | Exception | Stable code | Stable data |
+|---|---|---|---|
+| Create | `wppaCreatePostException` | `create_post_failed` | `['post_type' => string]` |
+| Save | `wppaSavePostException` | `save_post_failed` | `['post_id' => int]` |
+| Delete without a returned `WP_Post` | `wppaDeletePostException` | `delete_post_failed` | `['post_id' => int]` |
+
+Do not serialize, dump, or log complete exception objects. Their object graph
+may contain the model, post content, loaded metadata, and arbitrary
+`WP_Error::error_data`. Log only explicitly allowlisted scalar context and
+stable codes needed for diagnosis. Treat messages and Core error data as
+untrusted text, escape them for their destination, and do not expose them over
+HTTP without an explicit authorization and redaction decision.
 
 ### WordPress hooks
 
@@ -333,17 +355,13 @@ To validate the release candidate explicitly, require `1.0.0-rc.1`.
 not provide release reproducibility. It should be used only for deliberate
 development testing.
 
-## 1.0 freeze follow-up
+## 1.0 freeze decision
 
-The following planned work is intentionally visible rather than being silently
-treated as already stable:
+[ADR 0002](docs/decisions/0002-1.0-api-freeze.md) accepts the 19-method PHP
+7.4-compatible interface, private initializer/loaders/state, preserved legacy
+public exception context, and stable defensive create/save error codes. T12
+implements and verifies that decision before `1.0.0-rc.1`.
 
-- adding the existing `getParam()` and `setParam()` operations to the interface;
-- resolving the visibility/status of `wpPostAble()`, `loadPost()`, protected
-  `$post`, and direct exception construction/property access.
-
-[T12, “Freeze and document the complete 1.0 public
-API”](https://github.com/hokoo/wpPostAble/issues/21), must update this inventory
-with the implemented signatures and resolve every item before `1.0.0-rc.1`.
-After the final `1.0.0` tag, any incompatible change to the frozen result requires
-2.0.0.
+After the final `1.0.0` tag, any incompatible change to this frozen contract
+requires 2.0.0. See [docs/API.md](docs/API.md) for the complete reference and
+[docs/UPGRADING-1.0.md](docs/UPGRADING-1.0.md) for consumer migration.

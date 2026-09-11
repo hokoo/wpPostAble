@@ -53,6 +53,24 @@ The underlying Composer command is `composer test:test-unit`, which selects the
 `unit` suite in `phpunit.xml.dist`. Unit tests live in `tests/Unit/` and load
 `tests/bootstrap.php`; they do not load WordPress Core.
 
+The 1.0 contract checks are deliberately broader than line coverage. They use
+reflection and behavior fixtures to verify:
+
+- the exact 19-method interface, PHP 7.4-compatible return types, parameter
+  names, and trait compatibility;
+- the private `wpPostAble()` initializer, private loaders, and private `$post`
+  association state;
+- a complete manual implementation of the interface, so adding or changing a
+  required signature fails during the suite;
+- exception inheritance, non-final status, public constructors, legacy public
+  context properties, getters, and constants;
+- preservation of original WordPress errors and the stable
+  `create_post_failed`, `save_post_failed`, and `delete_post_failed` fallback
+  codes and context.
+
+The reference being enforced is [API.md](API.md). Migration-sensitive checks
+should also be compared with [UPGRADING-1.0.md](UPGRADING-1.0.md).
+
 ## Lint and complete local check
 
 Lint all PHP under `src/`, `tests/`, and `scripts/`:
@@ -159,10 +177,11 @@ and then runs a clean, locked, classmap-authoritative
 package is copied under `vendor/` rather than symlinked, the package has no
 nested `vendor/` or environment files, PHPUnit and Brain Monkey are absent, the
 public interface, trait, and exception classes autoload from the installed copy,
-and the runtime constraints and PSR-4 mapping match the package manifest. The
-archive root is restricted to runtime source plus `composer.json`, the license,
-changelog, and public documentation; local WordPress, CI, IDE, test, coverage,
-and developer-tooling paths are excluded.
+the installed interface and trait match the frozen 1.0 signature/visibility
+contract, and the runtime constraints and PSR-4 mapping match the package
+manifest. The archive root is restricted to runtime source plus `composer.json`,
+the license, changelog, and public documentation; local WordPress, CI, IDE,
+test, coverage, and developer-tooling paths are excluded.
 
 Temporary archive and consumer directories are always removed. A successful
 run writes machine-readable evidence to:
@@ -224,9 +243,11 @@ Each profile downloads a clean English (`en_US`) WordPress installation,
 installs it against a temporary MariaDB 10.11 database, links the local fixture
 as an mu-plugin, verifies the actual WordPress and PHP versions, and runs
 `tests/integration/wp-lifecycle.php` through WP-CLI. The lifecycle covers
-create/save/reload, title, Core-normalized slug persistence, status transitions,
-zero, positive, and negative menu-order persistence with save-failure retry,
-metadata, parameter serialization, and deletion behavior in real WordPress.
+creation, ID and direct-`WP_Post` loading, title, Core-normalized slug
+persistence, status transitions, zero, positive, and negative menu-order
+persistence with save-failure retry, metadata, parameter serialization, and
+deletion behavior in real WordPress. It verifies the actual WordPress/PHP pair
+and retains no fixture posts after cleanup.
 
 The following environment variables can override integration inputs for a
 targeted investigation:
@@ -270,11 +291,12 @@ manual workflow dispatch. Jobs are skipped while a pull request is a draft.
 The workflow has three job groups and produces exactly five required check runs:
 
 1. **PHP quality** on PHP 7.4 and 8.4: strict Composer validation, locked
-   dependency installation, `composer audit`, PHP lint, and unit tests.
-2. **Coverage and package gates** on PHP 8.4 with Xdebug: enforced 100% source
-   line/method coverage followed by the production package-install smoke. The
-   Clover report, coverage summary, and package-install evidence are uploaded
-   as seven-day artifacts.
+   dependency installation, `composer audit`, PHP lint, unit tests, and the
+   production package-install/API smoke on each runtime edge.
+2. **Coverage and package evidence** on PHP 8.4 with Xdebug: enforced 100%
+   source line/method coverage followed by another production package-install
+   smoke. This job uploads the Clover report, coverage summary, and
+   package-install evidence as seven-day artifacts.
 3. **WordPress integration** with `minimum` and `latest` matrix entries: Composer
    installation followed by the matching integration runner profile. Failed
    jobs upload `tests/integration/artifacts/` for seven days when diagnostics
@@ -292,4 +314,4 @@ make test.integration
 The local PHP container currently represents the PHP 8.4 side of the quality
 matrix. The minimum WordPress integration profile supplies the repository's
 real-WordPress PHP 7.4 compatibility check; the CI quality job additionally
-runs the unit suite and lint directly on PHP 7.4.
+runs lint, unit, and installed-package API checks directly on PHP 7.4.
