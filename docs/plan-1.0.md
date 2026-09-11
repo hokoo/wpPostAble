@@ -625,3 +625,16 @@ Each implementation task must, in the same PR:
   non-mutating Release workflow run. Publication remains blocked until the
   repository owner separately approves `publish=true` for that exact SHA and a
   live owner-authenticated check confirms immutable releases remain enabled.
+
+### 2026-09-11 — T13 preparation PR opened
+
+- [PR #35](https://github.com/hokoo/wpPostAble/pull/35) contains only the
+  reviewed `1.0.0-rc.1` changelog freeze and delivery evidence; it does not
+  create a tag, GitHub Release, or Composer version field.
+- Initial GitHub Actions run `34607103240` passed all five required jobs on
+  exact head `8ad5327b29add3f665557dd24aa712056fcf561d`: PHP 7.4/8.4 quality,
+  100% source coverage, and the minimum/latest WordPress integration profiles.
+- This evidence synchronization is the only change after the initial run. The
+  final PR head must pass the same checks before the owner merge gate. After an
+  approved merge, only the non-mutating `publish=false` dry run is authorized;
+  `publish=true` remains behind its own exact version/SHA/date gate.
