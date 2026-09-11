@@ -1,9 +1,10 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E2 and 0.7.0 completed; Batch 4 in progress
+- Status: Approved; E2, 0.7.0, and Batch 4 completed; T12 decision gate
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
+- Pending API freeze decision: [ADR 0002](decisions/0002-1.0-api-freeze.md)
 - Planning PR: [#25](https://github.com/hokoo/wpPostAble/pull/25)
 - Baseline: `master` at `b1e998dac9a1d16dd969f2b2e2e2744be0a9ecd0`
 
@@ -179,10 +180,10 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `review` | T8 |
-| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `review` | T8 |
-| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `review` | T8 |
-| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `waiting_dependency` | T1–T4, T9–T11 |
+| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `completed` | T8 |
+| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `completed` | T8 |
+| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `completed` | T8 |
+| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `needs_design` | T1–T4, T9–T11; owner approval of proposed ADR 0002 |
 
 ## E4. Release candidate and consumer validation
 
@@ -275,8 +276,8 @@ Tasks:
 3. Batch 3 (`completed`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
 4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
-6. Batch 4 (`in_progress`): T9, T10, and T11 after the verified `0.7.0` baseline.
-7. Batch 5: T12 contract audit/freeze and independent E3 QA.
+6. Batch 4 (`completed`): T9, T10, and T11 after the verified `0.7.0` baseline.
+7. Batch 5 (`needs_design`): T12 contract freeze and independent E3 QA after owner approval of [proposed ADR 0002](decisions/0002-1.0-api-freeze.md).
 8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
 10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
@@ -333,6 +334,8 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T11 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; `make smoke`; integration artifacts `minimum-20260910T232558Z-42780-14671` and `latest-20260910T232631Z-44008-10331` | Pass: 59 tests/354 assertions on PHP 7.4/8.4; 180/180 lines and 43/43 methods; localdev, package install, and both WordPress edges passed with zero remaining fixtures |
 | 2026-09-11 | Batch 4 pre-PR QA | Root integration artifacts `minimum-20260910T233033Z-47568-5574` and `latest-20260910T233211Z-49057-3120`; independent E3 contract/regression review of `0b05e33..dde6dc6` | Pass: all T9–T11 AC/DoD, 59 tests/354 assertions, 100% line/method coverage, package boundary, PHP 7.4/8.4 and WordPress 6.0/7.1; no findings, missing evidence, leaks, or scope expansion |
 | 2026-09-11 | Batch 4 initial PR validation | [PR #33](https://github.com/hokoo/wpPostAble/pull/33); [CI run 34543169846](https://github.com/hokoo/wpPostAble/actions/runs/34543169846) | Pass: 5/5 required jobs; protected PR remains open for final evidence synchronization |
+| 2026-09-11 | Batch 4 merge | [Final PR CI run 34543321838](https://github.com/hokoo/wpPostAble/actions/runs/34543321838); merge `48b2923`; [post-merge CI run 34579837783](https://github.com/hokoo/wpPostAble/actions/runs/34579837783) | Pass: 5/5 jobs twice; #2, #3, and #4 closed as completed; merged branch deleted |
+| 2026-09-11 | T12 design audit | Source/history/reflection audit; public consumers `cf7-telegram`, `cf7-vk`, `neuralseo`, `cf7-slack`, `ct-antiscam`, `ct-exchanges`, and `ct-treasures`; three independent contract reviews | Pass for decision readiness: four owner gates isolated in proposed ADR 0002; no runtime changes made |
 
 ## Transition log
 
@@ -519,3 +522,17 @@ Each implementation task must, in the same PR:
 - PR #33 links and will close #2, #3, and #4 only when merged. Its body records behavior, migration, SemVer, compatibility/security review, every required verification row, documentation/changelog impact, and independent QA.
 - Initial run `34543169846` passed all five required jobs: PHP 7.4 quality, PHP 8.4 quality and coverage/package installation, and WordPress minimum/latest integration.
 - This evidence synchronization is the only change after that run. The PR remains open until the new head passes the same strict checks.
+
+### 2026-09-11 — Batch 4 completed; T12 moved to design
+
+- The repository owner explicitly approved merging PR #33. REST merge was bound to the verified head `dca29408050482b9eca1add35a3218bd935d5426` and produced merge commit `48b292379e4b03c207a068cd000442e59374ac39`.
+- Final PR run `34543321838` and post-merge run `34579837783` each passed all five required jobs. GitHub closed #2, #3, and #4; their bodies now say `completed`, review labels were removed, and the merged branch was deleted automatically.
+- T9, T10, and T11 are `completed`. Their merged implementation satisfies the dependency side of T12's DoR.
+- T12 changed from `waiting_dependency` to `needs_design`: its remaining blocker is an explicit owner decision on exact return-type hardening, trait state visibility, legacy exception surface, and synthetic create/save error codes.
+
+### 2026-09-11 — T12 decision audit prepared
+
+- Three independent read-only reviews covered the complete interface/trait surface, exception state and constructors, initializer/loader visibility, PHP 7.4 constraints, tests, history, and known public consumers. The delivery owner also checked GitHub code search and local consumer heads.
+- All observed implementers use the trait and call private `wpPostAble()` from the adopting constructor; none calls or overrides `loadPost()`. Current consumers use `getPost()` instead of protected `$post`, though historical `cf7-telegram` code confirms direct property access existed and may remain in stale/private consumers.
+- No observed consumer constructs library exceptions directly or reads their context properties directly. Existing consumers use getters and `getMessage()`, but absence in known public heads does not prove private consumers are unaffected.
+- Proposed ADR 0002 records four explicit owner gates and recommended choices. Runtime implementation, T12 status `todo`, and RC preparation must wait until that ADR is accepted.
