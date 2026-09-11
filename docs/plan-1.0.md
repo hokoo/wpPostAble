@@ -226,8 +226,8 @@ Tasks:
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
 | T13 | [#22 Publish 1.0.0-rc.1 for compatibility validation](https://github.com/hokoo/wpPostAble/issues/22) | `completed` | T12 completed; staged publication approval received for the exact tuple |
-| T14 | [#23 Validate 1.0.0-rc.1 in downstream consumers](https://github.com/hokoo/wpPostAble/issues/23) | `in_progress` | T13 completed |
-| T14a | [#36 Ensure published Composer dist excludes development-only files](https://github.com/hokoo/wpPostAble/issues/36) | `in_progress` | T13 distribution finding; hosted verification before T15 |
+| T14 | [#23 Validate 1.0.0-rc.1 in downstream consumers](https://github.com/hokoo/wpPostAble/issues/23) | `review` | T13 completed; independent E4 QA pending |
+| T14a | [#36 Ensure published Composer dist excludes development-only files](https://github.com/hokoo/wpPostAble/issues/36) | `review` | Implementation verified locally; exact remote-SHA zipball and protected CI pending |
 
 ## E5. Stable 1.0.0 release
 
@@ -347,6 +347,9 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T13 non-mutating validation | [Release run 34607762582](https://github.com/hokoo/wpPostAble/actions/runs/34607762582); exact target `b89d219`; notes SHA-256 `0bd4997996261d73bb7c005b8403358f1d66041552d57a85610d8de08eba03fc` | Pass: intent plus five release gates succeeded, publish job skipped, tag/Release remained absent, immutable setting was enabled |
 | 2026-09-11 | T13 publication | [Release run 34608243327](https://github.com/hokoo/wpPostAble/actions/runs/34608243327); [immutable Release 1.0.0-rc.1](https://github.com/hokoo/wpPostAble/releases/tag/1.0.0-rc.1) | Pass: exact approved tuple; tag/target/notes match; prerelease, non-draft, immutable; stable latest remains `0.7.0` |
 | 2026-09-11 | T13 distribution verification | Packagist source/dist metadata; authenticated clean exact-version `--no-dev --prefer-dist` install; stable `^1.0` resolution check | Pass for T13: both refs equal `b89d219`; exact RC API autoloads with 19 methods and no dev dependencies; default stable constraint rejects the RC. Real dist includes development-only tracked paths, recorded in [#36](https://github.com/hokoo/wpPostAble/issues/36) as a stable-release blocker. |
+| 2026-09-11 | T14 public consumers | `cf7-telegram@10b285c`, `cf7-vk@42e774d`, and `neuralseo@6272b6e`; exact Packagist RC provenance; unit/compatibility/lint/build/audit checks; isolated fresh WordPress artifacts | Pass: Telegram 95 tests/439 assertions, compatibility 95/0, WP 31/31; VK 103/463, compatibility 103/0, WP 27/27; Neuralseo 2/4; no wpPostAble migration defect |
+| 2026-09-11 | T14 private consumer | Authorized private `ct-antiscam@7ba9a68`, original `^0.6.2`; exact RC lock/runtime provenance; platform/API/lint scan | Pass with stated harness limitation: 209 first-party files linted, no incompatible use; existing consumer-only PHPCS debt and missing self-contained WP/PHPUnit harness are not RC regressions |
+| 2026-09-11 | T14a implementation | Commit `24b6a2c`; Git/Composer/GitHub-layout archive tests on PHP 7.4/8.4; 70 tests/970 assertions; actionlint 1.7.12; negative old-HEAD control | Pass locally: exact eight-entry/19-method/no-dev boundary for all three archive paths; old export policy fails as expected; exact remote-SHA zipball validation waits for pushed commit |
 
 ## Transition log
 
@@ -680,3 +683,45 @@ Each implementation task must, in the same PR:
   merges no longer require a separate approval prompt after DoD, independent
   review, and required CI pass. Irreversible release publication gates remain
   explicit and version/SHA/date-bound.
+
+### 2026-09-11 — T14 compatibility evidence and T14a remediation ready for review
+
+- Three public consumer heads and the authorized private `^0.6.2` consumer were
+  cloned into isolated temporary directories. Only their temporary Composer
+  manifests and locks were changed; no downstream commit, push, issue, release,
+  database, or persistent environment was modified.
+- `cf7-telegram@10b285c` and `cf7-vk@42e774d` replaced `dev-master` and their
+  explicit VCS override with exact Packagist `1.0.0-rc.1`. Both lock files,
+  installed metadata, and production ZIPs resolved source/dist to `b89d219`.
+  Telegram passed 95 unit tests with 439 assertions, 95 compatibility cases,
+  audit/lint/build, and a fresh WordPress lifecycle with 31/31 assertions. VK
+  passed 103 unit tests with 463 assertions, 103 compatibility cases,
+  audit/lint/build, and a fresh WordPress lifecycle with 27/27 assertions.
+- `neuralseo@6272b6e` upgraded its temporary `>=0.5` resolution to the exact RC
+  and passed platform checks plus its complete two-test/four-assertion suite.
+  Private `ct-antiscam@7ba9a68` upgraded only its temporary `^0.6.2` lock,
+  proved exact installed provenance, passed platform/API checks, and linted all
+  209 first-party PHP files. It has no self-contained WP/database or root
+  PHPUnit harness; its existing consumer-only PHPCS findings do not cover the
+  installed RC and are recorded as a limitation rather than an RC regression.
+- Static migration scans found only trait-based compatible implementations,
+  in-class initialization, no relevant overrides or private-loader calls, no
+  direct trait post-state access, and no direct exception-context access. The
+  existing migration guide already covers every observed pattern, so its
+  contract guidance does not need amendment. Full evidence and residual risks
+  are recorded in `docs/compatibility/1.0.0-rc.1.md`.
+- Both CF7 frontend builds surfaced pre-existing npm-tree advisories, including
+  high and critical development findings. Their successful production ZIPs do
+  not ship `node_modules`; this is downstream maintenance outside the
+  wpPostAble release and no downstream mutation is authorized.
+- T14a commit `24b6a2c` adds a matching Git export policy, makes Git archive the
+  primary package boundary test while retaining Composer archive parity, and
+  makes the Release coverage/package gate download the authenticated GitHub
+  zipball by validated full target SHA. PHP 7.4/8.4 checks pass all three archive
+  layouts with the exact eight-entry root, 19-method API, public-symbol
+  provenance, and no dev dependencies. The prior commit fails the new boundary
+  test as expected.
+- T14 and T14a moved to `review`. Remaining gates are root full regression,
+  exact pushed-SHA hosted zip validation, protected PR CI, and independent E4
+  QA. Stable 1.0 remains blocked; `rc.2` is not required solely for the
+  export-only fix if the exact master-SHA hosted archive gate passes.
