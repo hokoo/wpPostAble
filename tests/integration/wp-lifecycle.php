@@ -54,6 +54,23 @@ function wppa_integration_raw_meta_values( $post_id, $meta_key ) {
 }
 
 /**
+ * Read menu_order directly from the posts table, bypassing the object cache.
+ *
+ * @param int $post_id Post ID.
+ * @return int
+ */
+function wppa_integration_persisted_menu_order( $post_id ) {
+	global $wpdb;
+
+	return (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT menu_order FROM {$wpdb->posts} WHERE ID = %d",
+			$post_id
+		)
+	);
+}
+
+/**
  * Assert that untouched multi-value and structured metadata remain byte-for-byte stable.
  *
  * @param int      $post_id                 Post ID.
@@ -86,6 +103,16 @@ try {
 	wppa_integration_assert( $post_id > 0, 'model creation did not return a persisted post ID' );
 	wppa_integration_assert( WpPostAbleLocalItem::POST_TYPE === $item->getPostType(), 'model post type changed' );
 	wppa_integration_assert( 'draft' === $item->getStatus(), 'new model did not start as a draft' );
+	wppa_integration_assert( '' === $item->getSlug(), 'new draft did not start with an empty slug' );
+	wppa_integration_assert( 0 === $item->getMenuOrder(), 'new draft did not start with menu order zero' );
+
+	$requested_slug = 'Custom Slug For Integration';
+	$expected_slug = sanitize_title( $requested_slug );
+	wppa_integration_assert( $requested_slug !== $expected_slug, 'slug fixture does not exercise Core normalization' );
+	wppa_integration_assert( $item === $item->setSlug( $requested_slug ), 'slug setter was not chainable' );
+	wppa_integration_assert( $requested_slug === $item->getSlug(), 'slug setter changed the raw in-memory value' );
+	wppa_integration_assert( $item === $item->setMenuOrder( 17 ), 'menu-order setter was not chainable' );
+	wppa_integration_assert( 17 === $item->getMenuOrder(), 'menu-order setter changed the requested positive value' );
 
 	$unicode_param = 'Привет, საქართველო 👋';
 	$nested_param  = array(
@@ -112,12 +139,17 @@ try {
 	$item->setParam( 'nested', $nested_param );
 	$item->setParam( '0', 'numeric-key value' );
 	$item->savePost();
+	wppa_integration_assert( $requested_slug === $item->getSlug(), 'save unexpectedly rewrote the in-memory slug' );
+	wppa_integration_assert( $expected_slug === get_post_field( 'post_name', $post_id ), 'Core did not persist its normalized slug' );
 
 	wppa_integration_assert( false !== add_post_meta( $post_id, 'wppa_multi', 'first value' ), 'first multi-value meta row was not added' );
 	wppa_integration_assert( false !== add_post_meta( $post_id, 'wppa_multi', 'second value' ), 'second multi-value meta row was not added' );
 
 	$loaded = new WpPostAbleLocalItem( $post_id );
 	wppa_integration_assert( 'wpPostAble integration lifecycle' === $loaded->getTitle(), 'title did not survive save/reload' );
+	wppa_integration_assert( $expected_slug === $loaded->getSlug(), 'Core-normalized slug did not survive save/reload' );
+	wppa_integration_assert( 17 === $loaded->getMenuOrder(), 'positive menu order did not survive save/reload' );
+	wppa_integration_assert( 17 === wppa_integration_persisted_menu_order( $post_id ), 'positive menu order was not stored in the database' );
 	wppa_integration_assert( 'draft' === $loaded->getStatus(), 'draft status did not survive save/reload' );
 	wppa_integration_assert( '' === $loaded->getParam( 'empty' ), 'empty parameter did not survive save/reload' );
 	wppa_integration_assert( $unicode_param === $loaded->getParam( 'unicode' ), 'Unicode parameter did not survive save/reload' );
@@ -130,6 +162,112 @@ try {
 	wppa_integration_assert( $structured_meta === $loaded->getMetaField( 'wppa_structured' ), 'structured meta did not survive save/reload' );
 	wppa_integration_assert( 'first value' === $loaded->getMetaField( 'wppa_multi' ), 'model did not expose the first multi-value meta row' );
 
+	$menu_order_state = array(
+		'title'                    => $loaded->getTitle(),
+		'status'                   => $loaded->getStatus(),
+		'content'                  => $loaded->getPost()->post_content,
+		'post_content_filtered'    => $loaded->getPost()->post_content_filtered,
+		'slug'                     => $loaded->getSlug(),
+		'meta'                     => $loaded->getMetaFields(),
+	);
+
+	wppa_integration_assert( $loaded === $loaded->setMenuOrder( 0 ), 'menu-order reset was not chainable' );
+	$loaded->savePost();
+	$loaded = new WpPostAbleLocalItem( $post_id );
+	wppa_integration_assert( 0 === $loaded->getMenuOrder(), 'zero menu order did not survive save/reload' );
+	wppa_integration_assert( 0 === wppa_integration_persisted_menu_order( $post_id ), 'zero menu order was not stored in the database' );
+
+	$loaded->setMenuOrder( -7 );
+	$menu_order_post = $loaded->getPost();
+	$block_menu_order_save = static function ( $maybe_empty, $post_data ) {
+		return true;
+	};
+	add_filter( 'wp_insert_post_empty_content', $block_menu_order_save, 10, 2 );
+	$menu_order_exception = null;
+	try {
+		$loaded->savePost();
+	} catch ( \iTRON\wpPostAble\Exceptions\wppaSavePostException $exception ) {
+		$menu_order_exception = $exception;
+	} finally {
+		remove_filter( 'wp_insert_post_empty_content', $block_menu_order_save, 10 );
+	}
+
+	wppa_integration_assert( $menu_order_exception instanceof \iTRON\wpPostAble\Exceptions\wppaSavePostException, 'blocked menu-order save did not throw wppaSavePostException' );
+	wppa_integration_assert( $loaded === $menu_order_exception->getPostable(), 'menu-order save exception lost the model' );
+	wppa_integration_assert( $menu_order_post === $menu_order_exception->getPost(), 'menu-order save exception lost the post' );
+	wppa_integration_assert( $menu_order_exception->getError() instanceof WP_Error, 'blocked menu-order save did not preserve a Core WP_Error' );
+	wppa_integration_assert( -7 === $loaded->getMenuOrder(), 'failed save discarded the requested negative menu order' );
+	wppa_integration_assert( 0 === wppa_integration_persisted_menu_order( $post_id ), 'failed save changed the persisted menu order' );
+
+	$loaded->savePost();
+	$loaded = new WpPostAbleLocalItem( $post_id );
+	wppa_integration_assert( -7 === $loaded->getMenuOrder(), 'negative menu order did not survive retry and reload' );
+	wppa_integration_assert( -7 === wppa_integration_persisted_menu_order( $post_id ), 'negative menu order was not stored after retry' );
+	wppa_integration_assert( $menu_order_state['title'] === $loaded->getTitle(), 'menu-order saves changed the title' );
+	wppa_integration_assert( $menu_order_state['status'] === $loaded->getStatus(), 'menu-order saves changed the status' );
+	wppa_integration_assert( $menu_order_state['content'] === $loaded->getPost()->post_content, 'menu-order saves changed post content' );
+	wppa_integration_assert( $menu_order_state['post_content_filtered'] === $loaded->getPost()->post_content_filtered, 'menu-order saves changed parameter content' );
+	wppa_integration_assert( $menu_order_state['slug'] === $loaded->getSlug(), 'menu-order saves changed the slug' );
+	wppa_integration_assert( $menu_order_state['meta'] === $loaded->getMetaFields(), 'menu-order saves changed metadata' );
+
+	$supplied_post       = $loaded->getPost();
+	$supplied_post_state = get_object_vars( $supplied_post );
+	$fixture_count       = wppa_integration_fixture_count();
+	$object_equal_calls  = array();
+	$object_meta_calls   = array();
+	$object_load_calls   = array();
+	$object_equal_filter = static function ( $equal, $class ) use ( &$object_equal_calls ) {
+		$object_equal_calls[] = array( $equal, $class );
+		return $equal;
+	};
+	$object_meta_filter = static function ( $load, $postable, $class ) use ( &$object_meta_calls ) {
+		$object_meta_calls[] = array( $load, $postable, $class );
+		return $load;
+	};
+	$object_load_action = static function ( $postable, $class ) use ( &$object_load_calls ) {
+		$object_load_calls[] = array( $postable, $class );
+	};
+	add_filter( '\wpPostAbleTrait\loadPost\equalPostType', $object_equal_filter, 10, 2 );
+	add_filter( '\wpPostAbleTrait\loadPost\loadMeta', $object_meta_filter, 10, 3 );
+	add_action( '\wpPostAbleTrait\loadPost\loading', $object_load_action, 10, 2 );
+	$object_loaded = new WpPostAbleLocalItem( $supplied_post );
+	remove_filter( '\wpPostAbleTrait\loadPost\equalPostType', $object_equal_filter, 10 );
+	remove_filter( '\wpPostAbleTrait\loadPost\loadMeta', $object_meta_filter, 10 );
+	remove_action( '\wpPostAbleTrait\loadPost\loading', $object_load_action, 10 );
+
+	wppa_integration_assert( $supplied_post === $object_loaded->getPost(), 'WP_Post object identity was not retained' );
+	wppa_integration_assert( $supplied_post_state === get_object_vars( $supplied_post ), 'compatible supplied WP_Post was mutated during initialization' );
+	wppa_integration_assert( $fixture_count === wppa_integration_fixture_count(), 'WP_Post initialization inserted another fixture post' );
+	wppa_integration_assert( $structured_meta === $object_loaded->getMetaField( 'wppa_structured' ), 'WP_Post initialization did not load structured meta' );
+	wppa_integration_assert( 'first value' === $object_loaded->getMetaField( 'wppa_multi' ), 'WP_Post initialization did not load the first multi-value row' );
+	wppa_integration_assert(
+		array( array( true, WpPostAbleLocalItem::class ) ) === $object_equal_calls,
+		'WP_Post initialization did not apply the post-type filter contract'
+	);
+	wppa_integration_assert(
+		array( array( true, $object_loaded, WpPostAbleLocalItem::class ) ) === $object_meta_calls,
+		'WP_Post initialization did not apply the metadata filter contract'
+	);
+	wppa_integration_assert(
+		array( array( $object_loaded, WpPostAbleLocalItem::class ) ) === $object_load_calls,
+		'WP_Post initialization did not emit the loading hook contract'
+	);
+
+	$mismatched_post            = clone $supplied_post;
+	$mismatched_post->post_type = 'page';
+	$mismatched_state           = get_object_vars( $mismatched_post );
+	$mismatch_exception         = null;
+	try {
+		new WpPostAbleLocalItem( $mismatched_post );
+	} catch ( \iTRON\wpPostAble\Exceptions\wppaLoadPostException $exception ) {
+		$mismatch_exception = $exception;
+	}
+	wppa_integration_assert( $mismatch_exception instanceof \iTRON\wpPostAble\Exceptions\wppaLoadPostException, 'mismatched supplied WP_Post was not rejected' );
+	wppa_integration_assert( $post_id === $mismatch_exception->getPostID(), 'mismatched supplied WP_Post exception lost its ID' );
+	wppa_integration_assert( 'wppa_item' === $mismatch_exception->getPostable()->getPostType(), 'mismatched supplied WP_Post exception lost model context' );
+	wppa_integration_assert( $mismatched_state === get_object_vars( $mismatched_post ), 'mismatched supplied WP_Post was mutated' );
+	wppa_integration_assert( $fixture_count === wppa_integration_fixture_count(), 'mismatched WP_Post initialization inserted another fixture post' );
+
 	$raw_scalar     = wppa_integration_raw_meta_values( $post_id, 'wppa_scalar' )[0];
 	$raw_structured = wppa_integration_raw_meta_values( $post_id, 'wppa_structured' )[0];
 	$multi_values   = array( 'first value', 'second value' );
@@ -138,9 +276,11 @@ try {
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'initial reload' );
 
 	$loaded->setTitle( 'wpPostAble title-only save' )->savePost();
+	wppa_integration_assert( $expected_slug === $loaded->getSlug(), 'title-only save changed the slug' );
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'title-only save' );
 
 	$loaded->setMetaField( 'wppa_unrelated', 'unrelated value' )->savePost();
+	wppa_integration_assert( $expected_slug === $loaded->getSlug(), 'metadata save changed the slug' );
 	wppa_integration_assert( 'unrelated value' === get_post_meta( $post_id, 'wppa_unrelated', true ), 'explicit single-meta save failed' );
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'unrelated single-meta save' );
 
@@ -190,6 +330,7 @@ try {
 	$published->draft();
 	$draft = new WpPostAbleLocalItem( $post_id );
 	wppa_integration_assert( 'draft' === $draft->getStatus(), 'draft() did not persist draft status' );
+	wppa_integration_assert( $expected_slug === $draft->getSlug(), 'slug changed across publish and draft saves' );
 	wppa_integration_assert_untouched_meta( $post_id, $multi_values, $raw_structured, 'draft save' );
 	wppa_integration_assert( '' === $draft->getParam( 'empty' ), 'empty parameter changed across later saves' );
 	wppa_integration_assert( $unicode_param === $draft->getParam( 'unicode' ), 'Unicode parameter changed across later saves' );
@@ -269,8 +410,13 @@ try {
 			'fixture_mu_plugin',
 			'create_save_reload',
 			'title_and_status',
+			'slug_core_normalization_and_reload',
+			'menu_order_zero_positive_negative',
+			'menu_order_save_failure_retry',
 			'empty_unicode_nested_numeric_params',
 			'param_exception_contracts',
+			'wp_post_object_identity_meta_and_hooks',
+			'wp_post_object_mismatch_context',
 			'scalar_and_serialized_structured_meta',
 			'dirty_meta_preservation_across_saves',
 			'structured_meta_raw_stability',

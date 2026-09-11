@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E2 and 0.7.0 completed; Batch 4 ready
+- Status: Approved; E2 and 0.7.0 completed; Batch 4 in progress
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -179,9 +179,9 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `todo` | T8 |
-| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `todo` | T8 |
-| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `todo` | T8 |
+| T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `review` | T8 |
+| T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `review` | T8 |
+| T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `review` | T8 |
 | T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `waiting_dependency` | T1–T4, T9–T11 |
 
 ## E4. Release candidate and consumer validation
@@ -275,7 +275,7 @@ Tasks:
 3. Batch 3 (`completed`): T4, T6, and T7 — contribution process, controlled release workflow, and repository governance.
 4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
-6. Batch 4 (`todo`): T9, T10, and T11 after the verified `0.7.0` baseline.
+6. Batch 4 (`in_progress`): T9, T10, and T11 after the verified `0.7.0` baseline.
 7. Batch 5: T12 contract audit/freeze and independent E3 QA.
 8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
@@ -327,6 +327,12 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T8 publication | [Release run 34538775979](https://github.com/hokoo/wpPostAble/actions/runs/34538775979); [immutable Release 0.7.0](https://github.com/hokoo/wpPostAble/releases/tag/0.7.0); target `612fb575` | Pass: five gates preceded the sole mutation; stable/latest, not draft/prerelease, `isImmutable: true` |
 | 2026-09-11 | T8 distribution verification | Packagist `0.7.0.0` source/dist refs; disposable exact-version `--no-dev` install; local fetched tag | Pass: all refs `612fb575`; zero dev packages; all public symbols autoloaded |
 | 2026-09-11 | E2 independent release QA | GitHub tag/Release/API/events, workflow ordering/artifacts, Packagist/install, historical-object and branch-protection audit | Pass: no defects, blockers, missing AC, or accepted risk |
+| 2026-09-11 | T8/E2 closure | [PR #32](https://github.com/hokoo/wpPostAble/pull/32); [PR CI run 34539696113](https://github.com/hokoo/wpPostAble/actions/runs/34539696113); merge `0b05e33`; [post-merge CI run 34539817971](https://github.com/hokoo/wpPostAble/actions/runs/34539817971) | Pass: 5/5 jobs twice; #20 closed; Release remained immutable at `612fb575` |
+| 2026-09-11 | T9 implementation | `make check`; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T230625Z-28416-22771` and `latest-20260910T230711Z-29747-24204` | Pass: 45 tests/270 assertions; 174/174 lines and 39/39 methods; package install and WP 6.0/PHP 7.4 plus WP 7.1/PHP 8.4 passed with zero remaining fixtures |
+| 2026-09-11 | T10 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; integration artifacts `minimum-20260910T231637Z-35090-18841` and `latest-20260910T231756Z-36534-31869` | Pass: 51 tests/309 assertions on PHP 7.4/8.4; 177/177 lines and 41/41 methods; package install and both WordPress edges passed with zero remaining fixtures |
+| 2026-09-11 | T11 implementation | `make check`; PHP 7.4 unit suite; `make coverage`; `make test.package-install`; `make smoke`; integration artifacts `minimum-20260910T232558Z-42780-14671` and `latest-20260910T232631Z-44008-10331` | Pass: 59 tests/354 assertions on PHP 7.4/8.4; 180/180 lines and 43/43 methods; localdev, package install, and both WordPress edges passed with zero remaining fixtures |
+| 2026-09-11 | Batch 4 pre-PR QA | Root integration artifacts `minimum-20260910T233033Z-47568-5574` and `latest-20260910T233211Z-49057-3120`; independent E3 contract/regression review of `0b05e33..dde6dc6` | Pass: all T9–T11 AC/DoD, 59 tests/354 assertions, 100% line/method coverage, package boundary, PHP 7.4/8.4 and WordPress 6.0/7.1; no findings, missing evidence, leaks, or scope expansion |
+| 2026-09-11 | Batch 4 initial PR validation | [PR #33](https://github.com/hokoo/wpPostAble/pull/33); [CI run 34543169846](https://github.com/hokoo/wpPostAble/actions/runs/34543169846) | Pass: 5/5 required jobs; protected PR remains open for final evidence synchronization |
 
 ## Transition log
 
@@ -469,3 +475,47 @@ Each implementation task must, in the same PR:
 - Packagist exposes `0.7.0` with source and dist references at the same SHA. Disposable exact-version installation contained no development packages and autoloaded every public symbol.
 - Mandatory independent T8/E2 QA passed with no defects, blockers, missing verification, or risk acceptance. Historical tags/Releases and protected `master` rules remained unchanged apart from the one authorized `0.7.0` addition.
 - T8 and E2 are `completed`. Readiness sweep moves T9/#2, T10/#3, and T11/#4 to `todo`; T12/#21 remains `waiting_dependency` until those three API tasks complete.
+
+### 2026-09-11 — Batch 4 started
+
+- Evidence-only PR #32 passed all five protected checks, merged as `0b05e3344706ae24829a346a9c3c79a1746d735a`, closed T8/#20, and passed all five post-merge checks. The immutable `0.7.0` Release remained unchanged at its approved `612fb575` target.
+- T9/#2, T10/#3, and T11/#4 moved from `todo` to `in_progress` on `codex/1.0-api-batch-4`; their approved ADR/task contracts satisfy DoR.
+- T9 has an isolated implementation owner. T10 and T11 receive parallel read-only contract/test design reviews, then implementation proceeds sequentially because all three tasks share the interface, trait, unit/integration tests, README, versioning policy, and changelog.
+- T12/#21 remains `waiting_dependency` until all three implementation tasks are delivered and verified. No RC preparation begins in Batch 4.
+
+### 2026-09-11 — T9 implementation ready for review
+
+- Initialization now accepts exactly `int|WP_Post|null` on the PHP 7.4-compatible untyped boundary. Unsupported weakly coercible values fail before WordPress calls or model mutation.
+- A supplied `WP_Post` retains object identity, bypasses insertion and lookup, and shares the existing post-type, metadata, unserialization, and loading-hook path. A type mismatch preserves the supplied object and exposes its ID and model context through `wppaLoadPostException`.
+- Unit tests cover object identity, hooks, metadata, mismatch atomicity, `null`/zero creation, and unsupported types. Both real-WordPress profiles cover the supplied-object success and mismatch paths.
+- Root verification repeated `make check`, enforced 100% line/method coverage, package-install smoke, and diff validation. Independent minimum/latest integration runs passed with zero leaked fixtures.
+- T9/#2 moved from `in_progress` to `review`; it remains open until the integrated Batch 4 PR passes protected CI and merges.
+
+### 2026-09-11 — T10 implementation ready for review
+
+- The interface and trait now expose typed, symmetric `getSlug(): string` and chainable `setSlug(string $slug): self` operations over `WP_Post::post_name`.
+- The setter deliberately stores the raw value in memory and does not save. WordPress Core owns normalization, uniqueness, and persistence; the current object keeps its raw value after save, while a reload exposes the persisted Core value.
+- Dedicated unit tests freeze the interface signatures, exact save payload, no-autosave behavior, and failed-save/retry state. Real-WordPress tests cover Core normalization, reload, and stability across later title, metadata, publish, and draft saves.
+- README, versioning/migration policy, changelog, and testing documentation now describe the slug contract and the requirement for manual interface implementations.
+- PHP 7.4 and 8.4 unit checks, enforced 100% line/method coverage, package installation, and both WordPress integration edges passed. T10/#3 moved to `review` pending Batch 4 protected CI and merge.
+
+### 2026-09-11 — T11 implementation ready for review
+
+- The interface and trait now expose typed, symmetric `getMenuOrder(): int` and chainable `setMenuOrder(int $menuOrder): self` operations over `WP_Post::menu_order`.
+- The setter accepts any integer, changes only in-memory state, and does not reorder posts or save automatically. The existing save lifecycle persists the field without introducing a separate range or query policy.
+- Dedicated unit tests freeze the interface signatures, zero/positive/negative values, exact save payload, no-autosave behavior, and failed-save/retry state.
+- Both real-WordPress profiles proved positive, zero, and negative persistence. A forced Core `WP_Error` left the database at zero while retaining `-7` in memory; retry then persisted `-7` without changing title, status, content, parameters, metadata, or slug.
+- README, versioning/migration policy, changelog, and testing documentation describe the contract and manual-interface migration. Root repeated unit, coverage, package-install, localdev smoke, and diff checks.
+- T11/#4 moved to `review` pending integrated Batch 4 QA, protected CI, and merge.
+
+### 2026-09-11 — Batch 4 pre-PR QA passed
+
+- The delivery-owner integration run on the combined T9–T11 HEAD passed all 16 lifecycle groups on WordPress 6.0/PHP 7.4 and WordPress 7.1/PHP 8.4. Both runs removed every fixture and project-scoped Docker resource; diagnostic logs were empty.
+- Independent E3 contract/regression QA reviewed `0b05e33..dde6dc6`, all three issue contracts, code, behavioral tests, documentation, package contents, and compatibility boundaries. It returned PASS with no findings, missing AC/DoD, human risk acceptance, secret/artifact leakage, unrelated changes, or T12 scope expansion.
+- Batch 4 is ready for one protected pull request. T9–T11 remain in `review` and their issues remain open until required CI passes and the PR merges.
+
+### 2026-09-11 — Batch 4 protected PR validation passed
+
+- PR #33 links and will close #2, #3, and #4 only when merged. Its body records behavior, migration, SemVer, compatibility/security review, every required verification row, documentation/changelog impact, and independent QA.
+- Initial run `34543169846` passed all five required jobs: PHP 7.4 quality, PHP 8.4 quality and coverage/package installation, and WordPress minimum/latest integration.
+- This evidence synchronization is the only change after that run. The PR remains open until the new head passes the same strict checks.

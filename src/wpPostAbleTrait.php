@@ -6,7 +6,7 @@
  * in the beginning __construct() of your class.
  * Pass to it two parameters
  *      $post_type      string      WP post type, associated with your class
- *      $post_id        int         Post ID for existing post, or nothing for creating new post
+ *      $post_id        int|WP_Post|null  Existing post or ID, or nothing for creating a new post
  */
 
 namespace iTRON\wpPostAble;
@@ -43,18 +43,33 @@ trait wpPostAbleTrait{
 	/**
 	 * Call this method in the beginning __construct() of your class.
 	 *
-	 * @param string $post_type
-	 * @param int $post_id
+	 * @param string           $post_type
+	 * @param int|WP_Post|null $post_id
 	 *
 	 * @return $this
 	 * @throws wppaCreatePostException
 	 * @throws wppaLoadPostException
 	 */
-	private function wpPostAble( string $post_type, int $post_id = 0 ): self {
+	private function wpPostAble( string $post_type, $post_id = 0 ): self {
+
+		if ( ! is_int( $post_id ) && null !== $post_id && ! ( $post_id instanceof WP_Post ) ) {
+			$given_type = is_object( $post_id ) ? get_class( $post_id ) : gettype( $post_id );
+			throw new \TypeError(
+				sprintf(
+					'%s(): Argument #2 ($post_id) must be of type int|WP_Post|null, %s given',
+					__METHOD__,
+					$given_type
+				)
+			);
+		}
 
 		if ( $this->post instanceof WP_Post ) return $this;
 
 		$this->post_type = $post_type;
+
+		if ( $post_id instanceof WP_Post ) {
+			return $this->loadPostObject( $post_id );
+		}
 
 		if ( empty( $post_id ) ){
 			$post_id = wp_insert_post([
@@ -251,6 +266,19 @@ trait wpPostAbleTrait{
 			throw new wppaLoadPostException( $post_id, $this, "Incorrect post id [ $post_id ]");
 		}
 
+		return $this->loadPostObject( $post );
+	}
+
+	/**
+	 * Load an already-resolved WordPress post into the model.
+	 *
+	 * @param WP_Post $post Post to load.
+	 * @return $this
+	 * @throws wppaLoadPostException
+	 */
+	private function loadPostObject( WP_Post $post ): self {
+		$post_id = $post->ID;
+
 		if (
 			! $this->applyFilters( '\wpPostAbleTrait\loadPost\equalPostType', $post->post_type === $this->post_type )
 		){
@@ -285,6 +313,24 @@ trait wpPostAbleTrait{
 
 	public function setTitle( string $title ): self {
 		$this->post->post_title = $title;
+		return $this;
+	}
+
+	public function getSlug(): string{
+		return $this->post->post_name;
+	}
+
+	public function setSlug( string $slug ): self {
+		$this->post->post_name = $slug;
+		return $this;
+	}
+
+	public function getMenuOrder(): int{
+		return (int) $this->post->menu_order;
+	}
+
+	public function setMenuOrder( int $menuOrder ): self {
+		$this->post->menu_order = $menuOrder;
 		return $this;
 	}
 
