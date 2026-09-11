@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E1-E3 and 0.7.0 completed; T13 release preparation in progress, publication gate pending
+- Status: Approved; E1-E3 and T13 completed; E4 downstream validation in progress
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -192,6 +192,7 @@ Outcome: `1.0.0-rc.1` is validated through Packagist and representative real con
 Scope:
 
 - RC publication.
+- Hosted GitHub/Packagist distribution parity with the lean production archive.
 - Public consumer checks in `cf7-telegram`, `cf7-vk`, and `neuralseo`.
 - At least one authorized private `^0.6.2` consumer check.
 - Evidence report and focused follow-up tasks for defects.
@@ -224,8 +225,9 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T13 | [#22 Publish 1.0.0-rc.1 for compatibility validation](https://github.com/hokoo/wpPostAble/issues/22) | `in_progress` | T12 completed; publication approval required only for the mutating dispatch |
-| T14 | [#23 Validate 1.0.0-rc.1 in downstream consumers](https://github.com/hokoo/wpPostAble/issues/23) | `waiting_dependency` | T13 |
+| T13 | [#22 Publish 1.0.0-rc.1 for compatibility validation](https://github.com/hokoo/wpPostAble/issues/22) | `completed` | T12 completed; staged publication approval received for the exact tuple |
+| T14 | [#23 Validate 1.0.0-rc.1 in downstream consumers](https://github.com/hokoo/wpPostAble/issues/23) | `in_progress` | T13 completed |
+| T14a | [#36 Ensure published Composer dist excludes development-only files](https://github.com/hokoo/wpPostAble/issues/36) | `in_progress` | T13 distribution finding; hosted verification before T15 |
 
 ## E5. Stable 1.0.0 release
 
@@ -267,7 +269,7 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T15 | [#24 Publish stable wpPostAble 1.0.0](https://github.com/hokoo/wpPostAble/issues/24) | `waiting_dependency` | T14, all RC blockers, publication approval |
+| T15 | [#24 Publish stable wpPostAble 1.0.0](https://github.com/hokoo/wpPostAble/issues/24) | `waiting_dependency` | T14, T14a, all RC blockers, publication approval |
 
 ## Planned execution batches
 
@@ -278,8 +280,8 @@ Tasks:
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
 6. Batch 4 (`completed`): T9, T10, and T11 after the verified `0.7.0` baseline.
 7. Batch 5 (`completed`): T12 contract freeze, independent E3 QA, protected PR merge, and post-merge verification under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md).
-8. T13 (`in_progress`): prepare and validate the `1.0.0-rc.1` release commit without mutation, then stop at the explicit publication gate.
-9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
+8. Batch 6 (`completed`): T13 preparation, non-mutating validation, owner-approved immutable `1.0.0-rc.1` publication, and exact GitHub/Packagist verification.
+9. Batch 7 (`in_progress`): T14 downstream validation and T14a distribution remediation; create and complete any additional focused defect tasks.
 10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
 
 Batch 1 was approved for execution on 2026-09-11.
@@ -341,6 +343,10 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Independent E3 contract QA | Review of `48b2923..d743888`; PHP 7.4/8.4 unit and installed-package checks; coverage/localdev; integration artifacts `minimum-20260911T092019Z-88289-31792` and `latest-20260911T092055Z-89341-13439`; AC/DoD trace | Pass: all eight T12 acceptance criteria and implementation/documentation/testing DoD items satisfied; no blocker/high/medium findings, no residual fixtures/resources, and no unapproved scope; only protected PR merge/post-merge CI remains |
 | 2026-09-11 | T12 initial PR validation | [PR #34](https://github.com/hokoo/wpPostAble/pull/34); [CI run 34584543192](https://github.com/hokoo/wpPostAble/actions/runs/34584543192) on head `af72df6` | Pass: all 5 required jobs, including installed-package API checks in both PHP 7.4 and PHP 8.4 quality jobs; evidence synchronization is the only subsequent source change |
 | 2026-09-11 | T12 merge and E3 closure | [Final PR CI run 34584708042](https://github.com/hokoo/wpPostAble/actions/runs/34584708042); merge `d5d9eec`; [post-merge CI run 34606003840](https://github.com/hokoo/wpPostAble/actions/runs/34606003840) | Pass: 5/5 jobs twice on exact final head and `master`; #21 closed with every DoD item checked; merged branch deleted; E3 completed without unresolved findings |
+| 2026-09-11 | T13 preparation | [PR #35](https://github.com/hokoo/wpPostAble/pull/35); initial run `34607103240`; final run `34607258414`; merge `b89d219`; post-merge run `34607562052` | Pass: both PR runs and post-merge run passed 5/5 jobs; release heading/date/links frozen without runtime changes |
+| 2026-09-11 | T13 non-mutating validation | [Release run 34607762582](https://github.com/hokoo/wpPostAble/actions/runs/34607762582); exact target `b89d219`; notes SHA-256 `0bd4997996261d73bb7c005b8403358f1d66041552d57a85610d8de08eba03fc` | Pass: intent plus five release gates succeeded, publish job skipped, tag/Release remained absent, immutable setting was enabled |
+| 2026-09-11 | T13 publication | [Release run 34608243327](https://github.com/hokoo/wpPostAble/actions/runs/34608243327); [immutable Release 1.0.0-rc.1](https://github.com/hokoo/wpPostAble/releases/tag/1.0.0-rc.1) | Pass: exact approved tuple; tag/target/notes match; prerelease, non-draft, immutable; stable latest remains `0.7.0` |
+| 2026-09-11 | T13 distribution verification | Packagist source/dist metadata; authenticated clean exact-version `--no-dev --prefer-dist` install; stable `^1.0` resolution check | Pass for T13: both refs equal `b89d219`; exact RC API autoloads with 19 methods and no dev dependencies; default stable constraint rejects the RC. Real dist includes development-only tracked paths, recorded in [#36](https://github.com/hokoo/wpPostAble/issues/36) as a stable-release blocker. |
 
 ## Transition log
 
@@ -638,3 +644,39 @@ Each implementation task must, in the same PR:
   final PR head must pass the same checks before the owner merge gate. After an
   approved merge, only the non-mutating `publish=false` dry run is authorized;
   `publish=true` remains behind its own exact version/SHA/date gate.
+
+### 2026-09-11 — T13 completed and T14 started
+
+- PR #35 final run `34607258414` passed all five checks on exact head
+  `4d1938f99a1c59607ae3ee5cb4b28d467444811f`. The PR merged as
+  `b89d21939be93ff5b4ab4a5d5f9dbfffa209d8b7`, and post-merge run
+  `34607562052` passed all five jobs on that exact `master` commit.
+- Release dry run `34607762582` passed intent validation, PHP 7.4/8.4 quality,
+  100% coverage and package verification, and both WordPress edge profiles.
+  Publication was skipped. Its 3,334-byte notes artifact matched SHA-256
+  `0bd4997996261d73bb7c005b8403358f1d66041552d57a85610d8de08eba03fc`;
+  no RC tag or Release existed afterward.
+- The owner approved `publish=true` only for tuple `1.0.0-rc.1` /
+  `b89d21939be93ff5b4ab4a5d5f9dbfffa209d8b7` / `2026-09-11`. Immediately
+  before dispatch, the owner-authenticated API again reported immutable
+  releases enabled, the actor matched repository owner `hokoo`, `master` was
+  unchanged, and both RC objects were absent.
+- Publication run `34608243327` reran every gate and created the immutable
+  prerelease. The lightweight tag and Release target both resolve to the exact
+  approved SHA; `isImmutable=true`, `isPrerelease=true`, `isDraft=false`; the
+  published notes match the reviewed 3,334-byte body byte-for-byte; and GitHub
+  latest remains stable `0.7.0`.
+- Packagist exposes `1.0.0-rc.1` with source and dist references equal to the
+  approved SHA. A clean explicit `--no-dev --prefer-dist` install loaded the
+  19-method public API; a normal `^1.0` stable constraint rejected the RC due to
+  minimum stability, as intended.
+- The actual GitHub/Packagist dist also exposed [packaging gap #36](https://github.com/hokoo/wpPostAble/issues/36): development
+  paths tracked in Git are present even though the separately built
+  `composer archive` used in CI is lean. This does not block using the RC for
+  compatibility checks, but it must be resolved and verified before stable
+  1.0. T14 moved to `in_progress`, with public and authorized private consumer
+  checks running in isolated temporary clones and no downstream writes.
+- The owner established a standing workflow instruction that ordinary PR
+  merges no longer require a separate approval prompt after DoD, independent
+  review, and required CI pass. Irreversible release publication gates remain
+  explicit and version/SHA/date-bound.
