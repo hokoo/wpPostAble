@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E1-E4 completed; E5 stable release preparation in progress
+- Status: Completed; stable `1.0.0` published and independently verified
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -269,7 +269,7 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T15 | [#24 Publish stable wpPostAble 1.0.0](https://github.com/hokoo/wpPostAble/issues/24) | `in_progress` | E4 complete; exact version/SHA/date publication approval remains gated |
+| T15 | [#24 Publish stable wpPostAble 1.0.0](https://github.com/hokoo/wpPostAble/issues/24) | `completed` | E4 complete; exact publication approved, executed, and independently verified |
 
 ## Planned execution batches
 
@@ -282,8 +282,8 @@ Tasks:
 7. Batch 5 (`completed`): T12 contract freeze, independent E3 QA, protected PR merge, and post-merge verification under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md).
 8. Batch 6 (`completed`): T13 preparation, non-mutating validation, owner-approved immutable `1.0.0-rc.1` publication, and exact GitHub/Packagist verification.
 9. Batch 7 (`completed`): T14 downstream validation, T14a distribution remediation, protected CI, exact hosted-archive verification, and independent E4 QA.
-10. Batch 8 (`in_progress`): T15 stable release preparation, changelog freeze, full QA, protected merge, and non-mutating release validation.
-11. Gate: explicit approval for the exact T15 `1.0.0` version/SHA/UTC-date tuple before immutable publication.
+10. Batch 8 (`completed`): T15 stable preparation, changelog freeze, full QA, protected merge, dry run, owner-approved immutable publication, Packagist verification, and independent E5 QA.
+11. Publication gate (`completed`): the owner approved only tuple `1.0.0` / `a0437fcf6e8c1ff5644161f2dc265b4e66d309b5` / `2026-09-11` after a successful non-mutating run and fresh live checks.
 
 Batch 1 was approved for execution on 2026-09-11.
 
@@ -357,6 +357,11 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | E4 release-route decision | Owner decision after independent QA; [#36](https://github.com/hokoo/wpPostAble/issues/36) | Accepted: no `rc.2`; exact stable-target GitHub zipball must pass before publication and exact Packagist dist must pass immediately afterward |
 | 2026-09-11 | T15 local release preparation | `make check`, `make coverage`, `make test.package-install`, `make smoke`; integration artifacts `minimum-20260911T165030Z-7801-192` and `latest-20260911T165104Z-8804-12525`; Composer audit; actionlint 1.7.12; changelog intent checks | Pass: 70/970, 192/192 lines, 43/43 methods, two lean local archive paths, persistent localdev, both 16-group WP edges with zero fixtures/logs/resources, no advisory; 209-byte stable notes SHA-256 `057ad95f9a44421bf24dd795d8a39bf132daac1ce19fa44b7fe5a754a47c2fa3` |
 | 2026-09-11 | T15 independent preparation QA | Commit `41f2403996669d2ad866ae0a74013407c0aa09a8`; independent E5 review; authenticated exact pushed-SHA GitHub zipball | Pass: no findings; only changelog/plan changed; exact 82,248-byte hosted ZIP SHA-256 `06717daaed545b3d7f12aa123944d7a19f81a7ae680bf2ae150d6ffc97429444` passed the three-artifact eight-entry/19-method/no-dev runner |
+| 2026-09-11 | T15 protected preparation | [PR #38](https://github.com/hokoo/wpPostAble/pull/38); [PR CI run 34625148206](https://github.com/hokoo/wpPostAble/actions/runs/34625148206); merge `a0437fc`; [post-merge CI run 34625310223](https://github.com/hokoo/wpPostAble/actions/runs/34625310223) | Pass: exact final head and merged `master` each passed 5/5 required jobs; branch deleted |
+| 2026-09-11 | T15 non-mutating validation | [Release run 34625517011](https://github.com/hokoo/wpPostAble/actions/runs/34625517011); tuple `1.0.0` / `a0437fc` / `2026-09-11`; 209-byte notes SHA-256 `057ad95f9a44421bf24dd795d8a39bf132daac1ce19fa44b7fe5a754a47c2fa3` | Pass: intent and five release gates succeeded, exact hosted archive passed, publication skipped, tag/Release remained absent |
+| 2026-09-11 | T15 publication | [Release run 34626407305](https://github.com/hokoo/wpPostAble/actions/runs/34626407305); [immutable Release 1.0.0](https://github.com/hokoo/wpPostAble/releases/tag/1.0.0) | Pass: exact approved tuple; all gates preceded mutation; tag/target/notes match; stable/latest, non-draft, `isImmutable: true`; RC remains immutable prerelease |
+| 2026-09-11 | T15 distribution verification | Live Packagist P2 metadata; disposable exact `1.0.0` and normal `^1.0` `--no-dev --prefer-dist` installs at `/tmp/wppa-stable-exact.a8GtIb` and `/tmp/wppa-stable-range.KykLlH` | Pass: source/dist/runtime refs equal `a0437fc`; both downloaded stable 1.0.0 and exposed eight roots, exact public-symbol provenance and 19-method/private-seam contract, no symlink/env/dev package |
+| 2026-09-11 | E5 independent post-release QA | Live workflow ordering/artifacts, GitHub tag/Release/latest/immutability/notes, Packagist metadata/dist, both retained installs, and #24 AC/DoD trace | Pass: blocker/high/medium/low findings all zero; technical AC complete; safe to close T15, E5, issue, and milestone after this evidence sync |
 
 ## Transition log
 
@@ -816,3 +821,35 @@ Each implementation task must, in the same PR:
 - This evidence-only synchronization must itself pass the same exact pushed-SHA
   hosted archive gate and all protected PR checks. Release workflow dispatch and
   publication remain unauthorized at this stage.
+
+### 2026-09-11 — Stable 1.0.0 published and independently verified
+
+- Preparation PR #38 passed all five required jobs on exact head `8694c9e`,
+  merged as stable target `a0437fcf6e8c1ff5644161f2dc265b4e66d309b5`,
+  and passed all five post-merge jobs. A fresh authenticated GitHub zipball for
+  the merge target passed the full three-artifact production boundary.
+- Non-mutating Release run `34625517011` validated tuple `1.0.0` / `a0437fc` /
+  `2026-09-11`, reran the five release gates, and skipped publication. Its
+  209-byte notes artifact matched the changelog byte-for-byte at SHA-256
+  `057ad95f9a44421bf24dd795d8a39bf132daac1ce19fa44b7fe5a754a47c2fa3`.
+- Independent prepublication QA returned GO with zero findings. The owner then
+  approved only that exact tuple. A final live read-back confirmed current UTC
+  date, exact unchanged `master`, owner actor, enabled immutable releases, and
+  absent stable tag/Release immediately before dispatch.
+- Publication run `34626407305` reran intent, PHP 7.4/8.4, 100% coverage plus
+  exact hosted-package verification, and both WordPress edge profiles before
+  its sole mutation job. All jobs passed and created stable `1.0.0` exactly
+  once at the approved target.
+- GitHub reports `1.0.0` non-draft, non-prerelease, latest, and immutable. Its
+  lightweight tag and Release target match `a0437fc`; published notes match the
+  dry-run artifact and changelog. `1.0.0-rc.1` remains an immutable prerelease.
+- Packagist exposes stable `1.0.0` with source and dist references equal to the
+  approved SHA. Clean exact `1.0.0` and default-stability `^1.0` installs both
+  downloaded that dist and passed the eight-entry boundary, installed public-
+  symbol provenance, exact 19-method API/signatures/private seams, and no-dev
+  checks.
+- Independent post-release E5 QA rechecked workflow ordering and artifacts,
+  GitHub objects and notes, Packagist metadata and installed files, both
+  Composer resolution modes, and the complete #24 acceptance contract. It
+  returned PASS with no finding. T15 and E5 are complete; issue #24 and the
+  `1.0.0` milestone can close after this protected evidence sync merges.
