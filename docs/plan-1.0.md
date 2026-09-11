@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E2, 0.7.0, and Batch 4 completed; T12 in review
+- Status: Approved; E1-E3 and 0.7.0 completed; T13 publication gate pending
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -183,7 +183,7 @@ Tasks:
 | T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `completed` | T8 |
 | T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `completed` | T8 |
 | T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `completed` | T8 |
-| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `review` | T1–T4, T9–T11; accepted ADR 0002 |
+| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `completed` | T1–T4, T9–T11; accepted ADR 0002 |
 
 ## E4. Release candidate and consumer validation
 
@@ -277,7 +277,7 @@ Tasks:
 4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
 6. Batch 4 (`completed`): T9, T10, and T11 after the verified `0.7.0` baseline.
-7. Batch 5 (`review`): T12 contract freeze and independent E3 QA under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md); protected PR verification and merge remain.
+7. Batch 5 (`completed`): T12 contract freeze, independent E3 QA, protected PR merge, and post-merge verification under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md).
 8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
 10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
@@ -340,6 +340,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T12 documentation and CI/security review | Independent documentation consistency audit; independent review of `48b2923..d743888`; Actionlint 1.7.12; Composer audit | Pass: source/API/migration each contain the same 19 methods, links and fences are valid, no stale contract wording or security/correctness findings, least-privilege CI preserved, no vulnerable Composer advisories |
 | 2026-09-11 | Independent E3 contract QA | Review of `48b2923..d743888`; PHP 7.4/8.4 unit and installed-package checks; coverage/localdev; integration artifacts `minimum-20260911T092019Z-88289-31792` and `latest-20260911T092055Z-89341-13439`; AC/DoD trace | Pass: all eight T12 acceptance criteria and implementation/documentation/testing DoD items satisfied; no blocker/high/medium findings, no residual fixtures/resources, and no unapproved scope; only protected PR merge/post-merge CI remains |
 | 2026-09-11 | T12 initial PR validation | [PR #34](https://github.com/hokoo/wpPostAble/pull/34); [CI run 34584543192](https://github.com/hokoo/wpPostAble/actions/runs/34584543192) on head `af72df6` | Pass: all 5 required jobs, including installed-package API checks in both PHP 7.4 and PHP 8.4 quality jobs; evidence synchronization is the only subsequent source change |
+| 2026-09-11 | T12 merge and E3 closure | [Final PR CI run 34584708042](https://github.com/hokoo/wpPostAble/actions/runs/34584708042); merge `d5d9eec`; [post-merge CI run 34606003840](https://github.com/hokoo/wpPostAble/actions/runs/34606003840) | Pass: 5/5 jobs twice on exact final head and `master`; #21 closed with every DoD item checked; merged branch deleted; E3 completed without unresolved findings |
 
 ## Transition log
 
@@ -594,3 +595,19 @@ Each implementation task must, in the same PR:
 - This evidence synchronization is the only change after that run. The PR must
   pass the same required checks on the new head before an owner merge gate is
   presented.
+
+### 2026-09-11 — T12 and E3 completed
+
+- The repository owner explicitly approved merging PR #34. The REST merge was
+  bound to verified head `f94e5a6c007f07dadeb84ab16d984d08f9f6b33e`
+  and produced merge commit `d5d9eec4d4bd8163fee7256e65b5a469c93615a3`.
+- Final PR run `34584708042` and post-merge `master` run `34606003840`
+  each passed all five required jobs. The post-merge matrix again verified
+  PHP 7.4/8.4 quality and installed archives, 100% source coverage, and both
+  WordPress edge profiles.
+- GitHub closed #21 with all DoD items checked and status `completed`; the
+  merged remote branch was deleted automatically. Local `master` was
+  fast-forwarded to the exact merge commit.
+- T12, Batch 5, and E3 are `completed`. T13 remains behind a separate explicit
+  human gate for publishing `1.0.0-rc.1`; no tag or release was created by the
+  T12 merge.
