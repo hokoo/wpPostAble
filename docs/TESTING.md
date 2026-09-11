@@ -7,8 +7,9 @@ The repository has four complementary validation layers:
   development WordPress database;
 - integration profiles create isolated temporary WordPress installations for
   the supported minimum and current environments;
-- the package-install smoke creates a Composer archive and installs it in a
-  disposable consumer project without development dependencies.
+- the package-install smoke creates a primary Git-hosted-equivalent archive and
+  a secondary Composer archive, then installs each in a disposable consumer
+  project without development dependencies.
 
 Run all commands in this guide from the repository root. Complete the initial
 [local-development setup](LOCAL-DEVELOPMENT.md) first. The Make targets install
@@ -163,25 +164,32 @@ The CI-facing equivalent is:
 composer test:package-install
 ```
 
-The command creates a ZIP with `composer archive`, extracts it to a temporary
-directory, and exposes that extracted artifact to a clean Composer project as a
-mirrored path repository. The test repository supplies a synthetic `0.0.0`
-version externally, in the same role that VCS/Packagist metadata supplies a real
-release version; it does not add a `version` field to the package manifest.
-Packagist is disabled for this isolated install.
+The command creates its primary ZIP with `git archive` from the exact checked-out
+commit and a secondary parity ZIP with `composer archive`. GitHub source
+archives use Git archive semantics, so the primary artifact exercises the
+`.gitattributes` `export-ignore` policy used by the distribution that Packagist
+installs. Each artifact is extracted separately and exposed to its own clean
+Composer project as a mirrored path repository. The test repository supplies a
+synthetic `0.0.0` version externally, in the same role that VCS/Packagist
+metadata supplies a real release version; it does not add a `version` field to
+the package manifest. Packagist is disabled for these isolated installs.
 
 Composer first resolves the isolated lock in a disposable resolver workspace,
 copies only `composer.json` and `composer.lock` into a separate empty consumer,
 and then runs a clean, locked, classmap-authoritative
-`composer install --no-dev`. The smoke fails unless the
-package is copied under `vendor/` rather than symlinked, the package has no
-nested `vendor/` or environment files, PHPUnit and Brain Monkey are absent, the
-public interface, trait, and exception classes autoload from the installed copy,
-the installed interface and trait match the frozen 1.0 signature/visibility
-contract, and the runtime constraints and PSR-4 mapping match the package
-manifest. The archive root is restricted to runtime source plus `composer.json`,
-the license, changelog, and public documentation; local WordPress, CI, IDE,
-test, coverage, and developer-tooling paths are excluded.
+`composer install --no-dev`. Both paths run the same assertions. The smoke fails
+unless the package is copied under `vendor/` rather than symlinked, contains no
+symlinks, nested `vendor/`, or environment-like files, leaves PHPUnit and Brain
+Monkey absent, and autoloads every public interface, trait, and exception class
+from the installed copy. Reflection checks the frozen 19-method API and private
+composition seams. The installed package must retain its library type, runtime
+constraints, and PSR-4 mapping.
+
+Both archive roots must contain exactly `CHANGELOG.md`, `CONTRIBUTING.md`,
+`LICENSE`, `README.md`, `VERSIONING.md`, `composer.json`, `docs`, and `src`.
+The Composer exclusion list and Git export policy independently omit local
+WordPress, CI, IDE, test, coverage, environment, and developer-tooling paths;
+either archive drifting from that eight-entry allowlist fails the command.
 
 Temporary archive and consumer directories are always removed. A successful
 run writes machine-readable evidence to:
@@ -190,8 +198,12 @@ run writes machine-readable evidence to:
 coverage/package-install.json
 ```
 
-The evidence includes the archive SHA-256 and size, PHP and Composer versions,
-install mode, locked package count, and the public symbols that were loaded.
+The versioned evidence contains one result for each packaging path, including
+its target commit, observed archive SHA-256 and size, PHP and Composer versions,
+install mode, locked package count, and the installed files that supplied each
+public symbol. An observed ZIP hash is diagnostic evidence for that run, not an
+identity guarantee: GitHub can regenerate archives with different compression
+while preserving the extracted contents of a commit archive.
 
 ## Persistent-site smoke test
 
@@ -292,10 +304,11 @@ The workflow has three job groups and produces exactly five required check runs:
 
 1. **PHP quality** on PHP 7.4 and 8.4: strict Composer validation, locked
    dependency installation, `composer audit`, PHP lint, unit tests, and the
-   production package-install/API smoke on each runtime edge.
+   Composer and Git-hosted-equivalent package-install/API smoke on each runtime
+   edge.
 2. **Coverage and package evidence** on PHP 8.4 with Xdebug: enforced 100%
-   source line/method coverage followed by another production package-install
-   smoke. This job uploads the Clover report, coverage summary, and
+   source line/method coverage followed by both package-install paths. This job
+   uploads the Clover report, coverage summary, and
    package-install evidence as seven-day artifacts.
 3. **WordPress integration** with `minimum` and `latest` matrix entries: Composer
    installation followed by the matching integration runner profile. Failed
