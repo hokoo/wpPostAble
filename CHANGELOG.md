@@ -12,7 +12,11 @@ policy.
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Fixed
+
+- GitHub and Packagist source distributions now exclude development-only files
+  and pass the same clean-install, exact API, and eight-entry package boundary
+  checks as the local Composer archive.
 
 ## [1.0.0-rc.1] - 2026-09-11
 

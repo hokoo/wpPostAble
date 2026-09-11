@@ -22,6 +22,9 @@ one final publication job:
   necessary immediately before mutation;
 - two PHP quality runs, one coverage/package run, and two WordPress integration
   runs must all pass before the publication job can start;
+- the coverage/package job downloads GitHub's source zipball through the
+  authenticated API at the validated full `target_sha`, installs it without
+  development dependencies, and rejects any extracted-content or API drift;
 - only the final job receives `contents: write`, and only when `publish` was set
   to `true` by the repository owner; both the original actor and the actor who
   triggers a rerun must be the owner;
@@ -102,11 +105,15 @@ and all five gate results:
 4. `Release WordPress integration / minimum`
 5. `Release WordPress integration / latest`
 
-The coverage/package job enforces 100% source lines and methods and installs the
-generated package artifact without development dependencies. The two
-integration profiles exercise the supported WordPress minimum and current
-latest release. These are separate gates; coverage is not a substitute for the
-behavior or real-WordPress checks.
+The coverage/package job enforces 100% source lines and methods. It installs the
+Composer archive, the local Git-hosted-equivalent archive, and an authenticated
+GitHub zipball requested by the validated full commit SHA. All three must expose
+the exact production allowlist, load the frozen API from the installed copy,
+and omit development dependencies. The remote archive check uses extracted
+contents and commit provenance rather than treating the generated ZIP byte hash
+as stable. The two integration profiles exercise the supported WordPress
+minimum and current latest release. These are separate gates; coverage is not a
+substitute for the behavior or real-WordPress checks.
 
 ## Owner publication gate
 
@@ -147,7 +154,10 @@ publication the final job confirms that:
 - neither the exact local/remote tag nor a GitHub Release exists;
 - the release notes still have the hash recorded by the first validation job;
 - the exact current remote previous tag from the changelog resolves to a commit
-  that is an ancestor of `target_sha`.
+  that is an ancestor of `target_sha`;
+- the authenticated GitHub source archive for `target_sha` has already passed
+  the production manifest, no-development-dependencies, autoload, signature,
+  and installed-file provenance checks in the required coverage/package job.
 
 For a version with a SemVer prerelease component, such as `1.0.0-rc.1`, the
 workflow passes `--prerelease --latest=false`. For a stable version it passes
@@ -196,19 +206,46 @@ composer init \
   --require "hokoo/wppostable:${release_version}" \
   --no-interaction
 composer install --no-dev --prefer-dist --no-interaction
-installed_reference="$(
-  composer show hokoo/wppostable --format=json |
-    php -r '$package = json_decode(stream_get_contents(STDIN), true); echo $package["source"]["reference"] ?? "";'
+php -r '
+$lock = json_decode(file_get_contents("composer.lock"), true);
+foreach ($lock["packages"] as $package) {
+    if ("hokoo/wppostable" !== $package["name"]) continue;
+    $expected = $argv[1];
+    exit(
+        $expected === ($package["source"]["reference"] ?? null)
+        && $expected === ($package["dist"]["reference"] ?? null)
+        ? 0 : 1
+    );
+}
+exit(1);
+' "${approved_target_sha}"
+expected_entries="$(printf '%s\n' \
+  CHANGELOG.md CONTRIBUTING.md LICENSE README.md VERSIONING.md \
+  composer.json docs src | LC_ALL=C sort)"
+installed_entries="$(
+  find vendor/hokoo/wppostable -mindepth 1 -maxdepth 1 -printf '%f\n' |
+    LC_ALL=C sort
 )"
-test "${installed_reference}" = "${approved_target_sha}"
+test "${installed_entries}" = "${expected_entries}"
+test -z "$(find vendor/hokoo/wppostable \( -type l -o -name '.env*' \) -print -quit)"
 php -r 'require "vendor/autoload.php"; exit(interface_exists("iTRON\\wpPostAble\\wpPostAble") ? 0 : 1);'
 ```
 
 The workflow does not call Packagist and a successful GitHub publication does
 not prove that Packagist has synchronized. The `source.reference` comparison is
 mandatory: a package named with the requested version but resolving to any SHA
-other than the approved `target_sha` fails verification. Treat exact-ref
-installation as a separate post-publication verification.
+other than the approved `target_sha` fails verification. The dist reference and
+eight-entry installed root are equally mandatory; this detects a Packagist
+distribution that includes tracked development files even when the local
+Composer archive is lean. Treat this exact-ref installation as a separate
+post-publication verification.
+
+Before stable `1.0.0`, verify the actual Packagist dist of a later prerelease
+with this sequence. If no later prerelease is published, the repository owner
+must explicitly accept the alternative safe route: the successful
+prepublication authenticated GitHub zipball gate for the exact stable target
+SHA, followed by the same Packagist checks immediately after publication. Never
+modify or replace an immutable earlier release to correct archive contents.
 
 ## Failure and immutable recovery rules
 

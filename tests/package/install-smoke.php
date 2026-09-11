@@ -50,6 +50,8 @@ $consumerDirectory = isset($argv[1]) ? rtrim($argv[1], DIRECTORY_SEPARATOR) : ''
 $archiveFile = $argv[2] ?? '';
 $evidenceFile = $argv[3] ?? '';
 $composerVersion = $argv[4] ?? '';
+$artifactSource = $argv[5] ?? '';
+$targetCommit = $argv[6] ?? '';
 $autoloadFile = $consumerDirectory . '/vendor/autoload.php';
 $installedDirectory = $consumerDirectory . '/vendor/hokoo/wppostable';
 
@@ -58,6 +60,14 @@ packageSmokeAssert(is_file($autoloadFile), 'production autoloader is missing');
 packageSmokeAssert(is_file($archiveFile), 'generated package archive is missing');
 packageSmokeAssert('' !== $evidenceFile, 'evidence path argument is missing');
 packageSmokeAssert('' !== $composerVersion, 'Composer version argument is missing');
+packageSmokeAssert(
+    1 === preg_match('/^[a-z0-9_-]+$/D', $artifactSource),
+    'artifact source is missing or malformed'
+);
+packageSmokeAssert(
+    1 === preg_match('/^[0-9a-f]{40}$/D', $targetCommit),
+    'target commit is missing or malformed'
+);
 packageSmokeAssert(is_dir($installedDirectory), 'package was not installed under vendor/');
 packageSmokeAssert(!is_link($installedDirectory), 'path package was symlinked instead of mirrored');
 
@@ -103,6 +113,18 @@ packageSmokeAssert(
     array() === (glob($installedDirectory . '/.env*') ?: array()),
     'package archive contains an environment file'
 );
+$installedIterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($installedDirectory, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+foreach ($installedIterator as $installedEntry) {
+    $relativePath = substr($installedEntry->getPathname(), strlen($installedDirectory) + 1);
+    packageSmokeAssert(!$installedEntry->isLink(), "package archive contains symlink {$relativePath}");
+    packageSmokeAssert(
+        1 !== preg_match('#(?:^|/)\.env[^/]*$#D', $relativePath),
+        "package archive contains environment-like path {$relativePath}"
+    );
+}
 packageSmokeAssert(!is_dir($consumerDirectory . '/vendor/phpunit'), 'PHPUnit was installed by a --no-dev install');
 packageSmokeAssert(!is_dir($consumerDirectory . '/vendor/brain'), 'Brain Monkey was installed by a --no-dev install');
 
@@ -135,14 +157,18 @@ foreach ($classes as $class) {
 }
 
 $installedRealPath = realpath($installedDirectory);
-$interfaceFile = (new ReflectionClass('iTRON\\wpPostAble\\wpPostAble'))->getFileName();
-$interfaceRealPath = false !== $interfaceFile ? realpath($interfaceFile) : false;
 packageSmokeAssert(false !== $installedRealPath, 'cannot resolve installed package directory');
-packageSmokeAssert(false !== $interfaceRealPath, 'cannot resolve autoloaded interface file');
-packageSmokeAssert(
-    0 === strpos($interfaceRealPath, $installedRealPath . DIRECTORY_SEPARATOR),
-    'public API loaded from the source checkout instead of the installed package'
-);
+$symbolFiles = array();
+foreach (array_merge($interfaces, $traits, $classes) as $symbol) {
+    $symbolFile = (new ReflectionClass($symbol))->getFileName();
+    $symbolRealPath = false !== $symbolFile ? realpath($symbolFile) : false;
+    packageSmokeAssert(false !== $symbolRealPath, "cannot resolve public symbol file {$symbol}");
+    packageSmokeAssert(
+        0 === strpos($symbolRealPath, $installedRealPath . DIRECTORY_SEPARATOR),
+        "public symbol {$symbol} loaded from outside the installed package"
+    );
+    $symbolFiles[$symbol] = substr($symbolRealPath, strlen($installedRealPath) + 1);
+}
 
 $publicApiSignatures = array(
     'getPost' => array('return' => 'WP_Post', 'parameters' => array()),
@@ -204,6 +230,7 @@ foreach (array('wpPostAble', 'loadPost', 'loadPostObject') as $privateMethodName
 $installedManifest = json_decode((string) file_get_contents($installedDirectory . '/composer.json'), true);
 packageSmokeAssert(is_array($installedManifest), 'installed composer.json is invalid');
 packageSmokeAssert('hokoo/wppostable' === ($installedManifest['name'] ?? null), 'installed package name changed');
+packageSmokeAssert('library' === ($installedManifest['type'] ?? null), 'installed package type changed');
 packageSmokeAssert(!array_key_exists('version', $installedManifest), 'package hardcodes a Composer version');
 packageSmokeAssert('>=7.4' === ($installedManifest['require']['php'] ?? null), 'PHP runtime constraint changed');
 packageSmokeAssert('*' === ($installedManifest['require']['ext-json'] ?? null), 'JSON extension constraint changed');
@@ -233,8 +260,10 @@ $summary = array(
     'version_source' => 'external-test-metadata',
     'synthetic_version' => '0.0.0',
     'artifact' => array(
+        'source' => $artifactSource,
+        'target_commit' => $targetCommit,
         'format' => 'zip',
-        'sha256' => hash_file('sha256', $archiveFile),
+        'observed_sha256' => hash_file('sha256', $archiveFile),
         'bytes' => filesize($archiveFile),
         'root_entries' => $packageEntries,
     ),
@@ -251,6 +280,7 @@ $summary = array(
         'interfaces' => $interfaces,
         'traits' => $traits,
         'classes' => $classes,
+        'files' => $symbolFiles,
     ),
     'public_api' => array(
         'method_count' => count($publicApiSignatures),

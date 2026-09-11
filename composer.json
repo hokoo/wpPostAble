@@ -30,6 +30,7 @@
   },
   "archive": {
     "exclude": [
+      "/.gitattributes",
       "/.agents",
       "/.codex",
       "/.env*",

@@ -1,0 +1,17 @@
+/.gitattributes export-ignore
+/.agents export-ignore
+/.codex export-ignore
+/.env* export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/.idea export-ignore
+/Makefile export-ignore
+/composer.lock export-ignore
+/coverage export-ignore
+/docker export-ignore
+/docker-compose.yml export-ignore
+/local-dev export-ignore
+/phpunit.xml.dist export-ignore
+/scripts export-ignore
+/tests export-ignore
+/vendor export-ignore

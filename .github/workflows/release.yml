@@ -312,9 +312,49 @@ jobs:
       - name: Generate and enforce Clover coverage
         run: composer test:coverage
 
-      - name: Verify production package install
+      - name: Verify production and exact GitHub-hosted package installs
         if: ${{ !cancelled() }}
-        run: composer test:package-install
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET_SHA: ${{ needs.release-intent.outputs.target_sha }}
+        run: |
+          set -Eeuo pipefail
+
+          [[ "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]] || {
+            printf 'Hosted package verification requires a lowercase full target SHA.\n' >&2
+            exit 1
+          }
+          [[ "$(git rev-parse 'HEAD^{commit}')" == "${TARGET_SHA}" ]] || {
+            printf 'Hosted package verification checkout does not match target SHA.\n' >&2
+            exit 1
+          }
+
+          hosted_archive="${RUNNER_TEMP}/wppostable-github-${TARGET_SHA}.zip"
+          curl \
+            --fail \
+            --location \
+            --proto '=https' \
+            --proto-redir '=https' \
+            --retry 3 \
+            --retry-all-errors \
+            --silent \
+            --show-error \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            --output "${hosted_archive}" \
+            "https://api.github.com/repos/${REPOSITORY}/zipball/${TARGET_SHA}"
+          [[ -s "${hosted_archive}" ]] || {
+            printf 'GitHub returned an empty hosted package archive.\n' >&2
+            exit 1
+          }
+          unzip -tqq "${hosted_archive}"
+
+          WPPA_HOSTED_PACKAGE_ARCHIVE="${hosted_archive}" \
+          WPPA_HOSTED_TARGET_SHA="${TARGET_SHA}" \
+            composer test:package-install
 
       - name: Upload coverage gate evidence
         if: ${{ always() }}
