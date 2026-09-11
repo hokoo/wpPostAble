@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E1-E3 and 0.7.0 completed; T13 publication gate pending
+- Status: Approved; E1-E3 and 0.7.0 completed; T13 release preparation in progress, publication gate pending
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -224,7 +224,7 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T13 | [#22 Publish 1.0.0-rc.1 for compatibility validation](https://github.com/hokoo/wpPostAble/issues/22) | `waiting_dependency` | T12, publication approval |
+| T13 | [#22 Publish 1.0.0-rc.1 for compatibility validation](https://github.com/hokoo/wpPostAble/issues/22) | `in_progress` | T12 completed; publication approval required only for the mutating dispatch |
 | T14 | [#23 Validate 1.0.0-rc.1 in downstream consumers](https://github.com/hokoo/wpPostAble/issues/23) | `waiting_dependency` | T13 |
 
 ## E5. Stable 1.0.0 release
@@ -278,7 +278,7 @@ Tasks:
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
 6. Batch 4 (`completed`): T9, T10, and T11 after the verified `0.7.0` baseline.
 7. Batch 5 (`completed`): T12 contract freeze, independent E3 QA, protected PR merge, and post-merge verification under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md).
-8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
+8. T13 (`in_progress`): prepare and validate the `1.0.0-rc.1` release commit without mutation, then stop at the explicit publication gate.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
 10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
 
@@ -611,3 +611,17 @@ Each implementation task must, in the same PR:
 - T12, Batch 5, and E3 are `completed`. T13 remains behind a separate explicit
   human gate for publishing `1.0.0-rc.1`; no tag or release was created by the
   T12 merge.
+
+### 2026-09-11 — T13 non-mutating release preparation started
+
+- T13 moved from `waiting_dependency` to `in_progress` because T12 and E3 are
+  complete. This status authorizes only the reversible preparation PR and the
+  `publish=false` workflow validation.
+- The release commit will freeze the already reviewed changelog body under
+  `1.0.0-rc.1` with the current UTC date, create a new empty `Unreleased`
+  section, and update comparison links. It will not add a Composer version,
+  change runtime code, or create a tag or GitHub Release.
+- After the preparation PR merges, the exact resulting `master` SHA must pass a
+  non-mutating Release workflow run. Publication remains blocked until the
+  repository owner separately approves `publish=true` for that exact SHA and a
+  live owner-authenticated check confirms immutable releases remain enabled.
