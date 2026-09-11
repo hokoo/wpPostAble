@@ -102,7 +102,7 @@ final class MenuOrderTest extends WordPressTestCase {
 	public function failedSaveProvider(): array {
 		return [
 			'WordPress error' => [ new WP_Error( 'save_failed', 'Could not save post.' ), 'Could not save post.' ],
-			'zero result'     => [ 0, '' ],
+			'zero result'     => [ 0, 'Unable to save post [ 23 ].' ],
 		];
 	}
 

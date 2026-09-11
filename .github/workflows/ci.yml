@@ -76,6 +76,9 @@ jobs:
       - name: Run unit tests
         run: composer test:test-unit
 
+      - name: Verify installed package API
+        run: composer test:package-install
+
   coverage:
     name: PHP coverage / PHP 8.4
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}

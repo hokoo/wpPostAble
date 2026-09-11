@@ -10,6 +10,42 @@ function packageSmokeAssert(bool $condition, string $message): void
     }
 }
 
+function packageSmokeTypeName($type)
+{
+    return $type instanceof ReflectionNamedType ? $type->getName() : null;
+}
+
+function packageSmokeAssertSignature(ReflectionMethod $method, array $expected): void
+{
+    packageSmokeAssert($method->isPublic(), "{$method->getName()} is not public");
+    packageSmokeAssert(
+        $expected['return'] === packageSmokeTypeName($method->getReturnType()),
+        "{$method->getName()} return type differs from the frozen contract"
+    );
+    if (null !== $method->getReturnType()) {
+        packageSmokeAssert(!$method->getReturnType()->allowsNull(), "{$method->getName()} return type became nullable");
+    }
+    packageSmokeAssert(
+        count($expected['parameters']) === $method->getNumberOfParameters(),
+        "{$method->getName()} parameter count differs from the frozen contract"
+    );
+
+    foreach ($method->getParameters() as $index => $parameter) {
+        list($name, $type) = $expected['parameters'][$index];
+        packageSmokeAssert($name === $parameter->getName(), "{$method->getName()} parameter {$index} changed name");
+        packageSmokeAssert(
+            $type === packageSmokeTypeName($parameter->getType()),
+            "{$method->getName()} parameter {$name} changed type"
+        );
+        if (null !== $parameter->getType()) {
+            packageSmokeAssert(!$parameter->getType()->allowsNull(), "{$method->getName()} parameter {$name} became nullable");
+        }
+        packageSmokeAssert(!$parameter->isDefaultValueAvailable(), "{$method->getName()} parameter {$name} became optional");
+        packageSmokeAssert(!$parameter->isPassedByReference(), "{$method->getName()} parameter {$name} became a reference");
+        packageSmokeAssert(!$parameter->isVariadic(), "{$method->getName()} parameter {$name} became variadic");
+    }
+}
+
 $consumerDirectory = isset($argv[1]) ? rtrim($argv[1], DIRECTORY_SEPARATOR) : '';
 $archiveFile = $argv[2] ?? '';
 $evidenceFile = $argv[3] ?? '';
@@ -108,6 +144,63 @@ packageSmokeAssert(
     'public API loaded from the source checkout instead of the installed package'
 );
 
+$publicApiSignatures = array(
+    'getPost' => array('return' => 'WP_Post', 'parameters' => array()),
+    'savePost' => array('return' => 'self', 'parameters' => array()),
+    'deletePost' => array('return' => 'void', 'parameters' => array()),
+    'getPostType' => array('return' => 'string', 'parameters' => array()),
+    'getTitle' => array('return' => 'string', 'parameters' => array()),
+    'setTitle' => array('return' => 'self', 'parameters' => array(array('title', 'string'))),
+    'getSlug' => array('return' => 'string', 'parameters' => array()),
+    'setSlug' => array('return' => 'self', 'parameters' => array(array('slug', 'string'))),
+    'getMenuOrder' => array('return' => 'int', 'parameters' => array()),
+    'setMenuOrder' => array('return' => 'self', 'parameters' => array(array('menuOrder', 'int'))),
+    'getStatus' => array('return' => 'string', 'parameters' => array()),
+    'setStatus' => array('return' => 'self', 'parameters' => array(array('status', 'string'))),
+    'setMetaField' => array(
+        'return' => 'self',
+        'parameters' => array(array('meta_key', 'string'), array('meta_value', null)),
+    ),
+    'getMetaField' => array('return' => null, 'parameters' => array(array('meta_key', 'string'))),
+    'getMetaFields' => array('return' => 'array', 'parameters' => array()),
+    'getParam' => array('return' => null, 'parameters' => array(array('param', 'string'))),
+    'setParam' => array(
+        'return' => 'void',
+        'parameters' => array(array('param', 'string'), array('value', null)),
+    ),
+    'publish' => array('return' => 'self', 'parameters' => array()),
+    'draft' => array('return' => 'self', 'parameters' => array()),
+);
+$interfaceReflection = new ReflectionClass('iTRON\\wpPostAble\\wpPostAble');
+$traitReflection = new ReflectionClass('iTRON\\wpPostAble\\wpPostAbleTrait');
+$expectedMethodNames = array_keys($publicApiSignatures);
+$interfaceMethodNames = array_map(
+    static function (ReflectionMethod $method): string {
+        return $method->getName();
+    },
+    $interfaceReflection->getMethods(ReflectionMethod::IS_PUBLIC)
+);
+$traitMethodNames = array_map(
+    static function (ReflectionMethod $method): string {
+        return $method->getName();
+    },
+    $traitReflection->getMethods(ReflectionMethod::IS_PUBLIC)
+);
+sort($expectedMethodNames);
+sort($interfaceMethodNames);
+sort($traitMethodNames);
+packageSmokeAssert($expectedMethodNames === $interfaceMethodNames, 'installed interface method set changed');
+packageSmokeAssert($expectedMethodNames === $traitMethodNames, 'installed trait public method set changed');
+
+foreach ($publicApiSignatures as $methodName => $signature) {
+    packageSmokeAssertSignature($interfaceReflection->getMethod($methodName), $signature);
+    packageSmokeAssertSignature($traitReflection->getMethod($methodName), $signature);
+}
+packageSmokeAssert($traitReflection->getProperty('post')->isPrivate(), 'installed trait $post property is not private');
+foreach (array('wpPostAble', 'loadPost', 'loadPostObject') as $privateMethodName) {
+    packageSmokeAssert($traitReflection->getMethod($privateMethodName)->isPrivate(), "{$privateMethodName} is not private");
+}
+
 $installedManifest = json_decode((string) file_get_contents($installedDirectory . '/composer.json'), true);
 packageSmokeAssert(is_array($installedManifest), 'installed composer.json is invalid');
 packageSmokeAssert('hokoo/wppostable' === ($installedManifest['name'] ?? null), 'installed package name changed');
@@ -158,6 +251,11 @@ $summary = array(
         'interfaces' => $interfaces,
         'traits' => $traits,
         'classes' => $classes,
+    ),
+    'public_api' => array(
+        'method_count' => count($publicApiSignatures),
+        'signatures_verified' => true,
+        'private_composition_seams_verified' => true,
     ),
     'composer_lock' => array(
         'content_hash' => $lock['content-hash'] ?? null,
