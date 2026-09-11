@@ -1,7 +1,33 @@
 # What is wpPostAble
 
+[![Tests and CI](https://github.com/hokoo/wpPostAble/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/hokoo/wpPostAble/actions/workflows/ci.yml?query=branch%3Amaster)
+[![Coverage: 100% lines and methods](https://img.shields.io/badge/coverage-100%25%20lines%20%7C%20100%25%20methods-brightgreen.svg)](docs/TESTING.md#enforced-source-coverage)
+[![Latest stable](https://img.shields.io/packagist/v/hokoo/wppostable.svg?label=stable)](https://packagist.org/packages/hokoo/wppostable)
+[![PHP requirement](https://img.shields.io/packagist/dependency-v/hokoo/wppostable/php.svg?label=PHP)](VERSIONING.md#supported-platforms)
+[![WordPress requirement](https://img.shields.io/badge/WordPress-%3E%3D%206.0-21759B.svg?logo=wordpress&logoColor=white)](VERSIONING.md#supported-platforms)
+[![License](https://img.shields.io/packagist/l/hokoo/wppostable.svg)](LICENSE)
+
 Library provides a functionality for associating your models with WordPress WP_Post model.
 Each instance holds a WP_Post, creating one only when no existing post or ID is supplied.
+
+## Quality and compatibility
+
+| Signal | Stable 1.0 baseline |
+|---|---|
+| Unit suite | 70 tests / 970 assertions |
+| Source coverage | 192/192 executable lines and 43/43 methods (100%) |
+| Required CI | PHP 7.4 and 8.4 quality; coverage/package; WordPress minimum/latest |
+| Production package | Eight reviewed root entries, frozen 19-method API, no development dependencies |
+
+| CI profile | PHP | WordPress |
+|---|---:|---:|
+| Minimum supported | 7.4 | 6.0 |
+| Current compatibility | 8.4 | Latest stable |
+
+The coverage badge represents an enforced merge threshold, not an approximate
+hosted metric: CI fails if executable source line or method coverage falls below
+100%. See [Testing and coverage](docs/TESTING.md) for the individual unit,
+package-install, persistent WordPress, and isolated integration gates.
 
 ## Project documentation
 
