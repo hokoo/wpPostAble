@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E2, 0.7.0, and Batch 4 completed; T12 in progress
+- Status: Approved; E2, 0.7.0, and Batch 4 completed; T12 in review
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -183,7 +183,7 @@ Tasks:
 | T9 | [#2 Allow initialization from a WP_Post object](https://github.com/hokoo/wpPostAble/issues/2) | `completed` | T8 |
 | T10 | [#3 Add slug accessors](https://github.com/hokoo/wpPostAble/issues/3) | `completed` | T8 |
 | T11 | [#4 Add menu-order accessors](https://github.com/hokoo/wpPostAble/issues/4) | `completed` | T8 |
-| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `in_progress` | T1–T4, T9–T11; accepted ADR 0002 |
+| T12 | [#21 Freeze and document the complete 1.0 public API](https://github.com/hokoo/wpPostAble/issues/21) | `review` | T1–T4, T9–T11; accepted ADR 0002 |
 
 ## E4. Release candidate and consumer validation
 
@@ -277,7 +277,7 @@ Tasks:
 4. Batch 3a (`completed`): T7a — owner-approved immutable-release enablement and independent security verification.
 5. Batch 3b (`completed`): T8 release preparation, non-mutating validation, owner-approved immutable publication, Packagist verification, and independent E2 QA.
 6. Batch 4 (`completed`): T9, T10, and T11 after the verified `0.7.0` baseline.
-7. Batch 5 (`in_progress`): T12 contract freeze followed by independent E3 QA under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md).
+7. Batch 5 (`review`): T12 contract freeze and independent E3 QA under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md); protected PR verification and merge remain.
 8. Gate: explicit approval to publish T13 `1.0.0-rc.1`.
 9. Batch 6: T14 downstream validation; create and complete focused defect tasks if needed.
 10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
@@ -336,6 +336,9 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | Batch 4 initial PR validation | [PR #33](https://github.com/hokoo/wpPostAble/pull/33); [CI run 34543169846](https://github.com/hokoo/wpPostAble/actions/runs/34543169846) | Pass: 5/5 required jobs; protected PR remains open for final evidence synchronization |
 | 2026-09-11 | Batch 4 merge | [Final PR CI run 34543321838](https://github.com/hokoo/wpPostAble/actions/runs/34543321838); merge `48b2923`; [post-merge CI run 34579837783](https://github.com/hokoo/wpPostAble/actions/runs/34579837783) | Pass: 5/5 jobs twice; #2, #3, and #4 closed as completed; merged branch deleted |
 | 2026-09-11 | T12 design audit | Source/history/reflection audit; public consumers `cf7-telegram`, `cf7-vk`, `neuralseo`, `cf7-slack`, `ct-antiscam`, `ct-exchanges`, and `ct-treasures`; three independent contract reviews | Pass for decision readiness: four owner gates isolated in proposed ADR 0002; no runtime changes made |
+| 2026-09-11 | T12 implementation verification | Commits `d5a1685` and `d743888`; `make check`; `make coverage`; `make test.package-install`; `make smoke`; direct PHP 7.4 unit and package-install runs; integration artifacts `minimum-20260911T091113Z-81343-18280` and `latest-20260911T091153Z-82644-10398` | Pass: 70 tests/970 assertions on PHP 7.4 and 8.4; 192/192 lines and 43/43 methods; installed 19-method API on both PHP edges; localdev and all 16 WordPress lifecycle groups passed with zero fixtures and empty debug/stderr logs |
+| 2026-09-11 | T12 documentation and CI/security review | Independent documentation consistency audit; independent review of `48b2923..d743888`; Actionlint 1.7.12; Composer audit | Pass: source/API/migration each contain the same 19 methods, links and fences are valid, no stale contract wording or security/correctness findings, least-privilege CI preserved, no vulnerable Composer advisories |
+| 2026-09-11 | Independent E3 contract QA | Review of `48b2923..d743888`; PHP 7.4/8.4 unit and installed-package checks; coverage/localdev; integration artifacts `minimum-20260911T092019Z-88289-31792` and `latest-20260911T092055Z-89341-13439`; AC/DoD trace | Pass: all eight T12 acceptance criteria and implementation/documentation/testing DoD items satisfied; no blocker/high/medium findings, no residual fixtures/resources, and no unapproved scope; only protected PR merge/post-merge CI remains |
 
 ## Transition log
 
@@ -545,3 +548,34 @@ Each implementation task must, in the same PR:
 - ADR 0002 is `Accepted`, and T12 moved from `needs_design` to `in_progress`.
   Runtime, tests, and documentation are being implemented; T12 is not complete
   and no T12 verification evidence has been recorded yet.
+
+### 2026-09-11 — T12 implementation verified before PR
+
+- Commit `d5a1685` aligns the exact 19-method PHP 7.4 interface/trait contract,
+  makes the accepted composition state private, adds stable defensive create and
+  save errors, adds API and exception contract fixtures, and verifies signatures
+  from the installed Composer archive. The PHP quality matrix now runs that
+  archive check on PHP 7.4 and 8.4.
+- Commit `d743888` publishes the accepted API reference and complete `0.7.x` to
+  `1.0` migration guide, updates all public entry points, and records safe
+  exception diagnostics and the accepted ADR.
+- PHP 7.4 and 8.4 each passed 70 tests with 970 assertions. Coverage remains
+  100% at 192/192 executable lines and 43/43 methods. Package installation and
+  its 19-signature reflection contract passed on both PHP edges; Composer audit
+  reported no advisories; the persistent local WordPress smoke passed.
+- Root integration artifacts `minimum-20260911T091113Z-81343-18280` and
+  `latest-20260911T091153Z-82644-10398` passed all 16 lifecycle groups against
+  WordPress 6.0/PHP 7.4.33 and WordPress 7.1/PHP 8.4.25. Both retained zero
+  fixtures, empty lifecycle stderr and WordPress debug logs, and no Docker test
+  resources.
+- Independent documentation review found exact agreement among source, API,
+  migration, versioning, changelog, and testing guidance. Independent CI and
+  security review found no correctness or security issue; permissions remain
+  read-only, actions remain pinned, and package verification uses the mirrored
+  isolated install rather than the source checkout.
+- Independent E3 contract QA passed every acceptance criterion with no
+  blocker/high/medium finding. Its repeat integration artifacts
+  `minimum-20260911T092019Z-88289-31792` and
+  `latest-20260911T092055Z-89341-13439` retained zero fixtures and empty logs.
+- T12 moved to `review`; only protected PR checks, owner-approved merge, and
+  post-merge CI remain. RC publication remains a separate owner gate.
