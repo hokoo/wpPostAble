@@ -1,6 +1,6 @@
 # wpPostAble 1.0 delivery plan
 
-- Status: Approved; E1-E3 and T13 completed; E4 downstream validation in progress
+- Status: Approved; E1-E4 completed; E5 stable release preparation in progress
 - Approved: 2026-09-11
 - Target milestone: [1.0.0](https://github.com/hokoo/wpPostAble/milestone/1)
 - Decision record: [ADR 0001](decisions/0001-versioning-and-release-strategy.md)
@@ -226,8 +226,8 @@ Tasks:
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
 | T13 | [#22 Publish 1.0.0-rc.1 for compatibility validation](https://github.com/hokoo/wpPostAble/issues/22) | `completed` | T12 completed; staged publication approval received for the exact tuple |
-| T14 | [#23 Validate 1.0.0-rc.1 in downstream consumers](https://github.com/hokoo/wpPostAble/issues/23) | `review` | T13 completed; independent E4 QA pending |
-| T14a | [#36 Ensure published Composer dist excludes development-only files](https://github.com/hokoo/wpPostAble/issues/36) | `review` | Implementation verified locally; exact remote-SHA zipball and protected CI pending |
+| T14 | [#23 Validate 1.0.0-rc.1 in downstream consumers](https://github.com/hokoo/wpPostAble/issues/23) | `completed` | T13 completed; independent E4 QA passed |
+| T14a | [#36 Ensure published Composer dist excludes development-only files](https://github.com/hokoo/wpPostAble/issues/36) | `completed` | Exact merged-SHA hosted archive verified; owner accepted stable-target route without `rc.2` |
 
 ## E5. Stable 1.0.0 release
 
@@ -269,7 +269,7 @@ Tasks:
 
 | ID | GitHub issue | Status | Dependencies |
 |---|---|---|---|
-| T15 | [#24 Publish stable wpPostAble 1.0.0](https://github.com/hokoo/wpPostAble/issues/24) | `waiting_dependency` | T14, T14a, all RC blockers, publication approval |
+| T15 | [#24 Publish stable wpPostAble 1.0.0](https://github.com/hokoo/wpPostAble/issues/24) | `in_progress` | E4 complete; exact version/SHA/date publication approval remains gated |
 
 ## Planned execution batches
 
@@ -281,8 +281,9 @@ Tasks:
 6. Batch 4 (`completed`): T9, T10, and T11 after the verified `0.7.0` baseline.
 7. Batch 5 (`completed`): T12 contract freeze, independent E3 QA, protected PR merge, and post-merge verification under [accepted ADR 0002](decisions/0002-1.0-api-freeze.md).
 8. Batch 6 (`completed`): T13 preparation, non-mutating validation, owner-approved immutable `1.0.0-rc.1` publication, and exact GitHub/Packagist verification.
-9. Batch 7 (`in_progress`): T14 downstream validation and T14a distribution remediation; create and complete any additional focused defect tasks.
-10. Gate: independent E4/E5 release QA and explicit approval to publish T15 `1.0.0`.
+9. Batch 7 (`completed`): T14 downstream validation, T14a distribution remediation, protected CI, exact hosted-archive verification, and independent E4 QA.
+10. Batch 8 (`in_progress`): T15 stable release preparation, changelog freeze, full QA, protected merge, and non-mutating release validation.
+11. Gate: explicit approval for the exact T15 `1.0.0` version/SHA/UTC-date tuple before immutable publication.
 
 Batch 1 was approved for execution on 2026-09-11.
 
@@ -351,6 +352,10 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T14 private consumer | Authorized private `ct-antiscam@7ba9a68`, original `^0.6.2`; exact RC lock/runtime provenance; platform/API/lint scan | Pass with stated harness limitation: 209 first-party files linted, no incompatible use; existing consumer-only PHPCS debt and missing self-contained WP/PHPUnit harness are not RC regressions |
 | 2026-09-11 | T14a implementation | Commit `24b6a2c`; Git/Composer/GitHub-layout archive tests on PHP 7.4/8.4; 70 tests/970 assertions; actionlint 1.7.12; negative old-HEAD control | Pass locally: exact eight-entry/19-method/no-dev boundary for all three archive paths; old export policy fails as expected; exact remote-SHA zipball validation waits for pushed commit |
 | 2026-09-11 | Batch 7 root regression | Commit `21f1f6a`; `make check`, `make coverage`, `make test.package-install`, `make smoke`; integration artifacts `minimum-20260911T144105Z-19632-15562` and `latest-20260911T144105Z-19622-7274`; authenticated GitHub zipball by full pushed SHA | Pass: 70/970, 192/192 lines, 43/43 methods, three exact eight-entry/no-dev archive paths, localdev, and all 16 lifecycle groups on both WP/PHP edges; zero fixtures, empty logs, no residual Docker resources |
+| 2026-09-11 | Batch 7 protected delivery | [PR #37](https://github.com/hokoo/wpPostAble/pull/37); [PR CI run 34613136425](https://github.com/hokoo/wpPostAble/actions/runs/34613136425); merge `26f4d03`; [post-merge CI run 34613301680](https://github.com/hokoo/wpPostAble/actions/runs/34613301680) | Pass: 5/5 required jobs on exact final head and merged `master` |
+| 2026-09-11 | E4 independent closure QA | Consumer report and exact SHAs; final merged-source package evidence; independent authenticated GitHub zipball SHA-256 `9ec25b39c671ee02d2b8fb738565c334daf8ee3138a03666482de949f55487f7` | Pass: T14/T14a AC and DoD complete, eight-entry/19-method/no-dev hosted boundary, no remaining findings |
+| 2026-09-11 | E4 release-route decision | Owner decision after independent QA; [#36](https://github.com/hokoo/wpPostAble/issues/36) | Accepted: no `rc.2`; exact stable-target GitHub zipball must pass before publication and exact Packagist dist must pass immediately afterward |
+| 2026-09-11 | T15 local release preparation | `make check`, `make coverage`, `make test.package-install`, `make smoke`; integration artifacts `minimum-20260911T165030Z-7801-192` and `latest-20260911T165104Z-8804-12525`; Composer audit; actionlint 1.7.12; changelog intent checks | Pass: 70/970, 192/192 lines, 43/43 methods, two lean local archive paths, persistent localdev, both 16-group WP edges with zero fixtures/logs/resources, no advisory; 209-byte stable notes SHA-256 `057ad95f9a44421bf24dd795d8a39bf132daac1ce19fa44b7fe5a754a47c2fa3` |
 
 ## Transition log
 
@@ -748,3 +753,46 @@ Each implementation task must, in the same PR:
 - Only an evidence-only plan synchronization follows this verification. The
   final pushed PR head must receive the same exact-SHA hosted archive check and
   all five protected CI jobs before independent E4 closure review.
+
+### 2026-09-11 — E4 completed and stable release preparation started
+
+- Batch 7 PR #37 passed all five required jobs on exact final head `11bf185`,
+  merged as `26f4d03`, and passed the same five jobs on merged `master`.
+- A fresh authenticated GitHub zipball for exact merged `master` passed the
+  complete three-artifact package runner. Its extracted package had exactly the
+  eight permitted roots, the frozen 19-method API, and no development packages.
+- Independent E4 closure QA rechecked the consumer report, exact consumer and
+  package refs, PR/merge ancestry, required CI, coverage, and hosted archive.
+  It returned PASS with no remaining finding; T14/#23 was closed.
+- The owner accepted the safe route without `1.0.0-rc.2`: T15 must repeat the
+  authenticated GitHub zipball gate against the exact stable target before
+  publication and must verify Packagist source/dist refs and installed contents
+  immediately after publication. T14a/#36 was closed.
+- E4 is complete and T15/#24 moved to `in_progress`. This authorizes reversible
+  release preparation and a non-mutating `publish=false` validation after the
+  protected preparation PR merges. Immutable `publish=true` still requires a
+  separate approval bound to the exact version, full SHA, and UTC date.
+
+### 2026-09-11 — T15 preparation verified locally
+
+- The changelog now contains a single dated `1.0.0` section for the hosted
+  distribution correction since `1.0.0-rc.1`, followed by a new empty
+  Unreleased section. Comparison links point from the RC to `1.0.0` and from
+  `1.0.0` to `HEAD`; the extracted 209-byte notes hash to
+  `057ad95f9a44421bf24dd795d8a39bf132daac1ce19fa44b7fe5a754a47c2fa3`.
+- Root unit/quality passed 70 tests with 970 assertions. Coverage remained
+  192/192 lines and 43/43 methods. Git-hosted-equivalent and Composer archives
+  passed the exact eight-entry, 19-method, public-provenance, and no-dev gates.
+- Persistent WordPress smoke passed. Clean integration artifacts
+  `minimum-20260911T165030Z-7801-192` and
+  `latest-20260911T165104Z-8804-12525` each passed all 16 lifecycle groups on
+  WordPress 6.0/PHP 7.4.33 and WordPress 7.1/PHP 8.4.25, respectively, with
+  zero fixtures, empty stderr/debug logs, and no residual project resources.
+- Composer audit, actionlint 1.7.12, changelog intent assertions, and
+  `git diff --check` passed. An existing stateless PHP/nginx bind mount initially
+  referenced the pre-existing checkout inode; recreating only those containers
+  restored `/workspace` while the healthy database and persistent volumes were
+  preserved. The repeated quality and localdev gates then passed.
+- No runtime, API, dependency, platform, workflow, or package-policy source was
+  changed in stable preparation. Independent preparation review, exact pushed-
+  SHA hosted archive validation, protected PR CI, and post-merge CI remain.
