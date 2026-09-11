@@ -356,6 +356,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | E4 independent closure QA | Consumer report and exact SHAs; final merged-source package evidence; independent authenticated GitHub zipball SHA-256 `9ec25b39c671ee02d2b8fb738565c334daf8ee3138a03666482de949f55487f7` | Pass: T14/T14a AC and DoD complete, eight-entry/19-method/no-dev hosted boundary, no remaining findings |
 | 2026-09-11 | E4 release-route decision | Owner decision after independent QA; [#36](https://github.com/hokoo/wpPostAble/issues/36) | Accepted: no `rc.2`; exact stable-target GitHub zipball must pass before publication and exact Packagist dist must pass immediately afterward |
 | 2026-09-11 | T15 local release preparation | `make check`, `make coverage`, `make test.package-install`, `make smoke`; integration artifacts `minimum-20260911T165030Z-7801-192` and `latest-20260911T165104Z-8804-12525`; Composer audit; actionlint 1.7.12; changelog intent checks | Pass: 70/970, 192/192 lines, 43/43 methods, two lean local archive paths, persistent localdev, both 16-group WP edges with zero fixtures/logs/resources, no advisory; 209-byte stable notes SHA-256 `057ad95f9a44421bf24dd795d8a39bf132daac1ce19fa44b7fe5a754a47c2fa3` |
+| 2026-09-11 | T15 independent preparation QA | Commit `41f2403996669d2ad866ae0a74013407c0aa09a8`; independent E5 review; authenticated exact pushed-SHA GitHub zipball | Pass: no findings; only changelog/plan changed; exact 82,248-byte hosted ZIP SHA-256 `06717daaed545b3d7f12aa123944d7a19f81a7ae680bf2ae150d6ffc97429444` passed the three-artifact eight-entry/19-method/no-dev runner |
 
 ## Transition log
 
@@ -796,3 +797,22 @@ Each implementation task must, in the same PR:
 - No runtime, API, dependency, platform, workflow, or package-policy source was
   changed in stable preparation. Independent preparation review, exact pushed-
   SHA hosted archive validation, protected PR CI, and post-merge CI remain.
+
+### 2026-09-11 — T15 preparation passed independent review
+
+- Stable-preparation commit `41f2403996669d2ad866ae0a74013407c0aa09a8`
+  changes only the changelog and delivery plan relative to exact E4 merge
+  `26f4d034558feb6299fdf2b4f0a5660eedf15079`.
+- Independent E5 review returned PASS with zero blocker, high, medium, or low
+  findings. It independently repeated unit, coverage, two-layout package,
+  Composer advisory, actionlint, syntax, changelog-intent, retained integration-
+  artifact, and residual-resource checks.
+- The authenticated GitHub zipball for exact pushed `41f2403` is 82,248 bytes
+  with SHA-256
+  `06717daaed545b3d7f12aa123944d7a19f81a7ae680bf2ae150d6ffc97429444`.
+  The complete three-artifact runner passed all three layouts with eight roots,
+  the 19-method API and private seams, installed-file provenance, and zero
+  development packages.
+- This evidence-only synchronization must itself pass the same exact pushed-SHA
+  hosted archive gate and all protected PR checks. Release workflow dispatch and
+  publication remain unauthorized at this stage.
