@@ -339,6 +339,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T12 implementation verification | Commits `d5a1685` and `d743888`; `make check`; `make coverage`; `make test.package-install`; `make smoke`; direct PHP 7.4 unit and package-install runs; integration artifacts `minimum-20260911T091113Z-81343-18280` and `latest-20260911T091153Z-82644-10398` | Pass: 70 tests/970 assertions on PHP 7.4 and 8.4; 192/192 lines and 43/43 methods; installed 19-method API on both PHP edges; localdev and all 16 WordPress lifecycle groups passed with zero fixtures and empty debug/stderr logs |
 | 2026-09-11 | T12 documentation and CI/security review | Independent documentation consistency audit; independent review of `48b2923..d743888`; Actionlint 1.7.12; Composer audit | Pass: source/API/migration each contain the same 19 methods, links and fences are valid, no stale contract wording or security/correctness findings, least-privilege CI preserved, no vulnerable Composer advisories |
 | 2026-09-11 | Independent E3 contract QA | Review of `48b2923..d743888`; PHP 7.4/8.4 unit and installed-package checks; coverage/localdev; integration artifacts `minimum-20260911T092019Z-88289-31792` and `latest-20260911T092055Z-89341-13439`; AC/DoD trace | Pass: all eight T12 acceptance criteria and implementation/documentation/testing DoD items satisfied; no blocker/high/medium findings, no residual fixtures/resources, and no unapproved scope; only protected PR merge/post-merge CI remains |
+| 2026-09-11 | T12 initial PR validation | [PR #34](https://github.com/hokoo/wpPostAble/pull/34); [CI run 34584543192](https://github.com/hokoo/wpPostAble/actions/runs/34584543192) on head `af72df6` | Pass: all 5 required jobs, including installed-package API checks in both PHP 7.4 and PHP 8.4 quality jobs; evidence synchronization is the only subsequent source change |
 
 ## Transition log
 
@@ -579,3 +580,17 @@ Each implementation task must, in the same PR:
   `latest-20260911T092055Z-89341-13439` retained zero fixtures and empty logs.
 - T12 moved to `review`; only protected PR checks, owner-approved merge, and
   post-merge CI remain. RC publication remains a separate owner gate.
+
+### 2026-09-11 — T12 protected PR opened
+
+- [PR #34](https://github.com/hokoo/wpPostAble/pull/34) links and will close #21
+  only when merged. It records the accepted behavior, breaking migrations,
+  SemVer classification, compatibility/security analysis, every required local
+  verification row, and all three independent reviews.
+- Initial GitHub Actions run `34584543192` passed all five required jobs on exact
+  head `af72df6bc7c0e0848ee9deb7542b166a4d974399`. Both PHP 7.4 and PHP 8.4
+  quality jobs now verify the mirrored installed-package API in addition to
+  unit/lint/audit checks; coverage and both WordPress edge jobs also passed.
+- This evidence synchronization is the only change after that run. The PR must
+  pass the same required checks on the new head before an owner merge gate is
+  presented.
