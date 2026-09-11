@@ -12,6 +12,8 @@ policy.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-11
+
 ### Fixed
 
 - GitHub and Packagist source distributions now exclude development-only files
@@ -316,7 +318,8 @@ At release time, rename the prepared `Unreleased` section to the exact version
 and UTC release date, update its comparison link from `HEAD` to the immutable
 tag, and create a new empty `Unreleased` section comparing that tag to `HEAD`.
 
-[Unreleased]: https://github.com/hokoo/wpPostAble/compare/1.0.0-rc.1...HEAD
+[Unreleased]: https://github.com/hokoo/wpPostAble/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/hokoo/wpPostAble/compare/1.0.0-rc.1...1.0.0
 [1.0.0-rc.1]: https://github.com/hokoo/wpPostAble/compare/0.7.0...1.0.0-rc.1
 [0.7.0]: https://github.com/hokoo/wpPostAble/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/hokoo/wpPostAble/compare/0.6.1...0.6.2
