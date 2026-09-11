@@ -350,6 +350,7 @@ Each implementation task must, in the same PR:
 | 2026-09-11 | T14 public consumers | `cf7-telegram@10b285c`, `cf7-vk@42e774d`, and `neuralseo@6272b6e`; exact Packagist RC provenance; unit/compatibility/lint/build/audit checks; isolated fresh WordPress artifacts | Pass: Telegram 95 tests/439 assertions, compatibility 95/0, WP 31/31; VK 103/463, compatibility 103/0, WP 27/27; Neuralseo 2/4; no wpPostAble migration defect |
 | 2026-09-11 | T14 private consumer | Authorized private `ct-antiscam@7ba9a68`, original `^0.6.2`; exact RC lock/runtime provenance; platform/API/lint scan | Pass with stated harness limitation: 209 first-party files linted, no incompatible use; existing consumer-only PHPCS debt and missing self-contained WP/PHPUnit harness are not RC regressions |
 | 2026-09-11 | T14a implementation | Commit `24b6a2c`; Git/Composer/GitHub-layout archive tests on PHP 7.4/8.4; 70 tests/970 assertions; actionlint 1.7.12; negative old-HEAD control | Pass locally: exact eight-entry/19-method/no-dev boundary for all three archive paths; old export policy fails as expected; exact remote-SHA zipball validation waits for pushed commit |
+| 2026-09-11 | Batch 7 root regression | Commit `21f1f6a`; `make check`, `make coverage`, `make test.package-install`, `make smoke`; integration artifacts `minimum-20260911T144105Z-19632-15562` and `latest-20260911T144105Z-19622-7274`; authenticated GitHub zipball by full pushed SHA | Pass: 70/970, 192/192 lines, 43/43 methods, three exact eight-entry/no-dev archive paths, localdev, and all 16 lifecycle groups on both WP/PHP edges; zero fixtures, empty logs, no residual Docker resources |
 
 ## Transition log
 
@@ -725,3 +726,25 @@ Each implementation task must, in the same PR:
   exact pushed-SHA hosted zip validation, protected PR CI, and independent E4
   QA. Stable 1.0 remains blocked; `rc.2` is not required solely for the
   export-only fix if the exact master-SHA hosted archive gate passes.
+
+### 2026-09-11 — Batch 7 root verification passed
+
+- Root `make check` passed 70 tests with 970 assertions. Coverage remained
+  192/192 executable lines and 43/43 methods. Composer audit reported no
+  advisory; actionlint 1.7.12, Bash syntax, PHP lint, and `git diff --check`
+  passed.
+- The package runner installed the exact `21f1f6a` tree through Git archive and
+  Composer archive paths. After that commit was pushed, the same runner consumed
+  GitHub's authenticated API zipball selected by the full SHA. All three
+  artifacts exposed only the eight allowed roots, loaded every public symbol
+  and exact 19-method API from the installed copy, and installed zero
+  development packages.
+- The persistent local WordPress smoke passed. Root integration artifacts
+  `minimum-20260911T144105Z-19632-15562` and
+  `latest-20260911T144105Z-19622-7274` passed all 16 lifecycle groups on
+  WordPress 6.0/PHP 7.4.33 and WordPress 7.1/PHP 8.4.25. Both retained zero
+  fixtures and empty lifecycle stderr/debug logs; no run-prefixed container,
+  volume, or network remained.
+- Only an evidence-only plan synchronization follows this verification. The
+  final pushed PR head must receive the same exact-SHA hosted archive check and
+  all five protected CI jobs before independent E4 closure review.
